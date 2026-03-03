@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     color: '#BFDBFE',
     marginHorizontal: 1,
     opacity: 0.18,
-    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-UltraLight' : undefined,
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Thin' : undefined,
   },
   introLetterOn: { color: '#fff', opacity: 1 },
   introDot: {
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     marginLeft: 1,
     opacity: 0,
     transform: [{ translateX: 22 }],
-    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-UltraLight' : undefined,
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Thin' : undefined,
   },
   introDotOn: { opacity: 1, transform: [{ translateX: 0 }], color: '#fff' },
   homeWrap: { flex: 1, paddingHorizontal: 4 },
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 40,
     color: '#0F172A',
-    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-UltraLight' : undefined,
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Thin' : undefined,
   },
   headerIcons: { flexDirection: 'row', gap: 8 },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
