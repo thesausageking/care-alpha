@@ -15,7 +15,7 @@ type Tab = 'home' | 'bookings' | 'messages' | 'profile';
 type CareMode = 'ASAP' | 'Today' | 'Schedule';
 type VisitType = 'Video' | 'Home visit' | 'Clinic';
 type Availability = 'available' | 'limited' | 'unavailable' | 'offline';
-type FilterKey = 'mode' | 'visitType' | 'priceCap' | 'distance';
+
 
 type Doctor = {
   id: string;
@@ -99,7 +99,7 @@ export default function App() {
   const [priceCap, setPriceCap] = useState(120);
   const [visitType, setVisitType] = useState<VisitType>('Clinic');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(DOCTORS[0].id);
-  const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const doctors = useMemo(
     () =>
@@ -130,42 +130,43 @@ export default function App() {
           </View>
 
           <View style={styles.filterBar}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowGap}>
-              <FilterChip label={mode} active={activeFilter === 'mode'} onPress={() => setActiveFilter(activeFilter === 'mode' ? null : 'mode')} />
-              <FilterChip label={visitType} active={activeFilter === 'visitType'} onPress={() => setActiveFilter(activeFilter === 'visitType' ? null : 'visitType')} />
-              <FilterChip label={`≤ £${priceCap}`} active={activeFilter === 'priceCap'} onPress={() => setActiveFilter(activeFilter === 'priceCap' ? null : 'priceCap')} />
-              <FilterChip label={`${distanceKm}km`} active={activeFilter === 'distance'} onPress={() => setActiveFilter(activeFilter === 'distance' ? null : 'distance')} />
-            </ScrollView>
+            <View style={styles.rowBetween}>
+              <FilterChip
+                label={`Filters • ${mode} • ${visitType} • ≤£${priceCap} • ${distanceKm}km`}
+                active={filtersOpen}
+                onPress={() => setFiltersOpen((v) => !v)}
+              />
+            </View>
 
-            {activeFilter === 'mode' && (
-              <View style={styles.dropdownRow}>
-                {(['ASAP', 'Today', 'Schedule'] as CareMode[]).map((item) => (
-                  <SmallButton key={item} label={item} primary={item === mode} onPress={() => { setMode(item); setActiveFilter(null); }} />
-                ))}
-              </View>
-            )}
+            {filtersOpen && (
+              <View style={styles.dropdownPanel}>
+                <Text style={styles.panelLabel}>Time</Text>
+                <View style={styles.dropdownRow}>
+                  {(['ASAP', 'Today', 'Schedule'] as CareMode[]).map((item) => (
+                    <SmallButton key={item} label={item} primary={item === mode} onPress={() => setMode(item)} />
+                  ))}
+                </View>
 
-            {activeFilter === 'visitType' && (
-              <View style={styles.dropdownRow}>
-                {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((item) => (
-                  <SmallButton key={item} label={item} primary={item === visitType} onPress={() => { setVisitType(item); setActiveFilter(null); }} />
-                ))}
-              </View>
-            )}
+                <Text style={styles.panelLabel}>Type</Text>
+                <View style={styles.dropdownRow}>
+                  {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((item) => (
+                    <SmallButton key={item} label={item} primary={item === visitType} onPress={() => setVisitType(item)} />
+                  ))}
+                </View>
 
-            {activeFilter === 'priceCap' && (
-              <View style={styles.dropdownRow}>
-                {[60, 80, 120, 160].map((item) => (
-                  <SmallButton key={item} label={`≤ £${item}`} primary={item === priceCap} onPress={() => { setPriceCap(item); setActiveFilter(null); }} />
-                ))}
-              </View>
-            )}
+                <Text style={styles.panelLabel}>Price</Text>
+                <View style={styles.dropdownRow}>
+                  {[60, 80, 120, 160].map((item) => (
+                    <SmallButton key={item} label={`≤ £${item}`} primary={item === priceCap} onPress={() => setPriceCap(item)} />
+                  ))}
+                </View>
 
-            {activeFilter === 'distance' && (
-              <View style={styles.dropdownRow}>
-                {[3, 5, 10, 20].map((item) => (
-                  <SmallButton key={item} label={`${item}km`} primary={item === distanceKm} onPress={() => { setDistanceKm(item); setActiveFilter(null); }} />
-                ))}
+                <Text style={styles.panelLabel}>Distance</Text>
+                <View style={styles.dropdownRow}>
+                  {[3, 5, 10, 20].map((item) => (
+                    <SmallButton key={item} label={`${item}km`} primary={item === distanceKm} onPress={() => setDistanceKm(item)} />
+                  ))}
+                </View>
               </View>
             )}
 
@@ -233,7 +234,7 @@ function markerColor(a: Availability) {
 function FilterChip({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
   return (
     <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label} ▾</Text>
+      <Text style={[styles.chipText, active && styles.chipTextActive]} numberOfLines={1}>{label} ▾</Text>
     </TouchableOpacity>
   );
 }
@@ -272,11 +273,13 @@ const styles = StyleSheet.create({
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   filterBar: { paddingHorizontal: 16, paddingBottom: 8 },
   rowGap: { flexDirection: 'row', gap: 8 },
-  chip: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999 },
+  chip: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999, maxWidth: '100%' },
   chipActive: { backgroundColor: '#1D4ED8' },
   chipText: { color: '#0F172A', fontWeight: '600' },
   chipTextActive: { color: '#fff' },
-  dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 8 },
+  dropdownPanel: { marginTop: 8, backgroundColor: '#fff', borderRadius: 14, padding: 10 },
+  panelLabel: { marginTop: 2, color: '#334155', fontWeight: '700', fontSize: 12 },
+  dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 6 },
   filterMeta: { marginTop: 8, color: '#0F172A', fontSize: 12, fontWeight: '600' },
   map: { height: 260, marginHorizontal: 16, borderRadius: 16 },
   marker: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 6 },
