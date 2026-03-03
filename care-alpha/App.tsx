@@ -355,10 +355,6 @@ export default function App() {
             <Text style={styles.meta}>Status: {bookingStatus === 'confirmed' ? 'Confirmed' : bookingStatus === 'starting_soon' ? 'Starting soon' : 'Completed'}</Text>
             <Text style={styles.meta}>Deposit paid: £{selectedDoctor ? Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100) : 0}</Text>
             <Text style={styles.meta}>Remainder after appointment</Text>
-            <View style={styles.rowGap}>
-              <SmallButton label="Mark starting soon" onPress={() => setBookingStatus('starting_soon')} />
-              <SmallButton label="Mark completed" primary onPress={() => setBookingStatus('completed')} />
-            </View>
             <Text style={styles.meta}>Receipt: Download PDF (placeholder)</Text>
           </View>
 
