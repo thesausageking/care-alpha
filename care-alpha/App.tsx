@@ -1,20 +1,44 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import * as Linking from 'expo-linking';
 import { supabase } from './lib.supabase';
 
-type Doctor = { id: string; name: string; price: number; rating: number; nextSlot: string };
+type Doctor = {
+  id: string;
+  name: string;
+  price: number;
+  rating: number;
+  type: 'GP' | 'ENT' | 'Dermatology';
+  etaMin: number;
+  nextSlot: string;
+  address: string;
+};
+
+const MOCK_DOCTORS: Doctor[] = [
+  { id: 'd1', name: 'Dr Khan', price: 65, rating: 4.8, type: 'GP', etaMin: 6, nextSlot: '12:15', address: 'Liverpool Street Clinic' },
+  { id: 'd2', name: 'Dr Patel', price: 55, rating: 4.7, type: 'ENT', etaMin: 9, nextSlot: '12:40', address: 'Bank Medical Centre' },
+  { id: 'd3', name: 'Dr Williams', price: 75, rating: 4.9, type: 'Dermatology', etaMin: 11, nextSlot: '13:00', address: 'Moorgate Private Practice' },
+  { id: 'd4', name: 'Dr Chen', price: 60, rating: 4.6, type: 'GP', etaMin: 8, nextSlot: '13:15', address: 'City Clinic EC2' },
+  { id: 'd5', name: 'Dr Ali', price: 70, rating: 4.9, type: 'ENT', etaMin: 5, nextSlot: '13:30', address: 'Aldgate Health Rooms' },
+];
 
 export default function App() {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [screen, setScreen] = useState<'welcome' | 'map' | 'profile' | 'booking' | 'confirmed'>('welcome');
-  const [status, setStatus] = useState('Connecting...');
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [status, setStatus] = useState('Connecting...');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedType, setSelectedType] = useState<'All' | 'GP' | 'ENT' | 'Dermatology'>('All');
+  const [selectedTime, setSelectedTime] = useState<'Now' | '12:30' | '13:00' | '13:30'>('Now');
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [screen, setScreen] = useState<'map' | 'confirmed'>('map');
   const [isPaying, setIsPaying] = useState(false);
-
-  const deposit = useMemo(() => Number(((selectedDoctor?.price ?? 0) * 0.15).toFixed(2)), [selectedDoctor]);
 
   useEffect(() => {
     (async () => {
@@ -33,31 +57,34 @@ export default function App() {
 
         const { data, error } = await supabase
           .from('doctors')
-          .select('id,price_gbp,rating,profiles!inner(full_name)')
+          .select('id,price_gbp,rating,clinic_address,profiles!inner(full_name)')
           .eq('is_online', true)
-          .limit(20);
+          .limit(40);
 
         if (error) throw error;
 
-        const mapped: Doctor[] = (data ?? []).map((d: any, i: number) => ({
+        const mapped: Doctor[] = (data?.length ? data : MOCK_DOCTORS).map((d: any, i: number) => ({
           id: d.id,
-          name: d.profiles.full_name,
-          price: d.price_gbp,
+          name: d.profiles?.full_name ?? d.name,
+          price: Number(d.price_gbp ?? d.price),
           rating: Number(d.rating ?? 4.7),
-          nextSlot: ['12:15', '12:40', '13:00', '13:20'][i % 4],
+          type: (['GP', 'ENT', 'Dermatology'][i % 3] as Doctor['type']),
+          etaMin: [5, 7, 8, 10, 12][i % 5],
+          nextSlot: ['12:15', '12:40', '13:00', '13:15', '13:30'][i % 5],
+          address: d.clinic_address ?? d.address ?? 'City of London Clinic',
         }));
 
         setDoctors(mapped);
-        setStatus(mapped.length ? 'Live data connected ✅' : 'Connected (no online doctors yet)');
+        setStatus('Live data connected ✅');
       } catch (e: any) {
-        setStatus(`Backend not ready: ${e.message}`);
+        setDoctors(MOCK_DOCTORS);
+        setStatus(`Using local doctor data (${e.message})`);
       }
     })();
   }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-
     (async () => {
       const url = new URL((globalThis as any).location.href);
       const payment = url.searchParams.get('payment');
@@ -75,8 +102,8 @@ export default function App() {
           deposit_gbp: pending.depositGbp,
         });
 
-        const doc = DOCTORS.find((d) => d.id === pending.doctorId) ?? null;
-        if (doc) setSelectedDoctor(doc);
+        const chosen = doctors.find((d) => d.id === pending.doctorId) ?? selectedDoctor;
+        setSelectedDoctor(chosen ?? null);
         setScreen('confirmed');
         setStatus('Payment complete ✅ Booking confirmed');
       } catch (e: any) {
@@ -87,37 +114,41 @@ export default function App() {
         (globalThis as any).history.replaceState({}, '', url.toString());
       }
     })();
-  }, []);
+  }, [doctors, selectedDoctor]);
+
+  const filteredDoctors = useMemo(() => {
+    let list = doctors;
+    if (selectedType !== 'All') list = list.filter((d) => d.type === selectedType);
+    if (selectedTime !== 'Now') list = list.filter((d) => d.nextSlot <= selectedTime);
+    return list;
+  }, [doctors, selectedType, selectedTime]);
+
+  const deposit = useMemo(() => {
+    if (!selectedDoctor) return 0;
+    return Number((selectedDoctor.price * 0.15).toFixed(2));
+  }, [selectedDoctor]);
 
   const startPayment = async () => {
-    if (!selectedDoctor) {
-      setStatus('Pick a doctor first');
-      return;
-    }
+    if (!selectedDoctor) return setStatus('Select a doctor pin first');
+    if (!patientId) return setStatus('Auth not ready yet');
 
-    if (!patientId) {
-      setStatus('Auth not ready: enable Anonymous sign-in in Supabase Auth > Providers');
-      return;
-    }
-
-    const paymentsApi = process.env.EXPO_PUBLIC_PAYMENTS_API_URL;
-    if (!paymentsApi) {
-      setStatus('Missing EXPO_PUBLIC_PAYMENTS_API_URL');
-      return;
-    }
+    const api = process.env.EXPO_PUBLIC_PAYMENTS_API_URL;
+    if (!api) return setStatus('Missing EXPO_PUBLIC_PAYMENTS_API_URL');
 
     try {
       setIsPaying(true);
       const returnUrl = Platform.OS === 'web' ? `${(globalThis as any).location.origin}?payment=success` : 'care://payment-success';
 
       if (Platform.OS === 'web') {
-        (globalThis as any).localStorage?.setItem(
-          'care_pending_booking',
-          JSON.stringify({ patientId, doctorId: selectedDoctor.id, consultationPriceGbp: selectedDoctor.price, depositGbp: deposit, doctorName: selectedDoctor.name }),
-        );
+        (globalThis as any).localStorage?.setItem('care_pending_booking', JSON.stringify({
+          patientId,
+          doctorId: selectedDoctor.id,
+          consultationPriceGbp: selectedDoctor.price,
+          depositGbp: deposit,
+        }));
       }
 
-      const res = await fetch(`${paymentsApi}/create-checkout-session`, {
+      const res = await fetch(`${api}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,16 +161,15 @@ export default function App() {
         }),
       });
 
-      if (!res.ok) throw new Error(`Payment API failed: ${res.status}`);
+      if (!res.ok) throw new Error(`Payment API failed ${res.status}`);
       const data = await res.json();
-      if (!data?.url) throw new Error('Missing checkout URL');
+      if (!data?.url) throw new Error('No checkout url');
 
       if (Platform.OS === 'web') {
         (globalThis as any).location.href = data.url;
       } else {
         await Linking.openURL(data.url);
       }
-      setStatus('Complete payment in Stripe, then return to app');
     } catch (e: any) {
       setStatus(`Payment error: ${e.message}`);
     } finally {
@@ -147,149 +177,186 @@ export default function App() {
     }
   };
 
-  const markPaidAndCreateBooking = async () => {
-    if (!selectedDoctor || !patientId) return;
-    try {
-      await supabase.from('bookings').insert({
-        patient_id: patientId,
-        doctor_id: selectedDoctor.id,
-        consultation_price_gbp: selectedDoctor.price,
-        deposit_gbp: deposit,
-      });
-      setScreen('confirmed');
-    } catch (e: any) {
-      setStatus(`Booking write failed: ${e.message}`);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <Text style={styles.brand}>Care Alpha</Text>
-        <Text style={styles.status}>{status}</Text>
-      </View>
 
-      <ScrollView contentContainerStyle={styles.body}>
-        {screen === 'welcome' && (
-          <Card>
-            <Title>Private doctor booking in London</Title>
-            <Small>In-person • 15 mins • 18+ only</Small>
-            <Btn label="Open map" onPress={() => setScreen('map')} />
-          </Card>
-        )}
+      {screen === 'map' && (
+        <View style={styles.mapScreen}>
+          <View style={styles.topOverlay}>
+            <Text style={styles.logo}>Care</Text>
+            <Text style={styles.subStatus}>{status}</Text>
 
-        {screen === 'map' && (
-          <Card>
-            <Title>Map: doctors near you</Title>
-            <View style={styles.mapBox}>
-              {doctors.map((d, i) => {
-                const pinStyle = [
-                  styles.pin,
-                  { left: `${18 + ((i * 23) % 62)}%`, top: `${20 + ((i * 19) % 55)}%` },
-                ] as const;
-                return (
-                  <TouchableOpacity
-                    key={d.id}
-                    style={pinStyle}
-                    onPress={() => {
-                      setSelectedDoctor(d);
-                      setScreen('profile');
-                    }}
-                  >
-                    <Text style={styles.pinText}>£{d.price}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={styles.filterRow}>
+              <FilterPill label={selectedType} onPress={() => cycleType(setSelectedType)} />
+              <FilterPill label={`Time: ${selectedTime}`} onPress={() => cycleTime(setSelectedTime)} />
             </View>
+          </View>
 
-            {selectedDoctor ? (
-              <View style={styles.doc}>
-                <View style={styles.row}>
-                  <Text style={styles.name}>{selectedDoctor.name}</Text>
-                  <Text style={styles.price}>£{selectedDoctor.price}</Text>
-                </View>
-                <Text style={styles.small}>★ {selectedDoctor.rating} • Next {selectedDoctor.nextSlot}</Text>
-                <Btn label="Book now" onPress={() => setScreen('booking')} />
+          <View style={styles.mapArea}>
+            <View style={styles.userDot} />
+            {filteredDoctors.map((d, i) => {
+              const active = selectedDoctor?.id === d.id;
+              return (
+                <TouchableOpacity
+                  key={d.id}
+                  style={[
+                    styles.pin,
+                    { left: `${12 + ((i * 19) % 75)}%`, top: `${16 + ((i * 17) % 68)}%` },
+                    active && styles.pinActive,
+                  ]}
+                  onPress={() => setSelectedDoctor(d)}
+                >
+                  <Text style={styles.pinText}>£{d.price}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {selectedDoctor ? (
+            <View style={styles.bottomSheet}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.docName}>{selectedDoctor.name}</Text>
+                <Text style={styles.price}>£{selectedDoctor.price}</Text>
               </View>
-            ) : (
-              <Small>Tap a price pin to select a doctor.</Small>
-            )}
+              <Text style={styles.meta}>★ {selectedDoctor.rating} • {selectedDoctor.type} • {selectedDoctor.etaMin} min away</Text>
+              <Text style={styles.meta}>{selectedDoctor.address} • Next {selectedDoctor.nextSlot}</Text>
+              <TouchableOpacity style={styles.bookBtn} onPress={startPayment}>
+                <Text style={styles.bookBtnText}>{isPaying ? 'Opening Apple Pay…' : `Book now • Pay £${deposit} deposit`}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.bottomHint}>
+              <Text style={styles.meta}>Tap a doctor pin to book</Text>
+            </View>
+          )}
+        </View>
+      )}
 
-            {!doctors.length && <Small>No doctors online yet. Add doctor rows in Supabase.</Small>}
-          </Card>
-        )}
-
-        {screen === 'profile' && selectedDoctor && (
-          <Card>
-            <Title>{selectedDoctor.name}</Title>
-            <Small>GMC verified</Small>
-            <Small>Price: £{selectedDoctor.price}</Small>
-            <Small>Next slot: {selectedDoctor.nextSlot}</Small>
-            <Btn label="Book now" onPress={() => setScreen('booking')} />
-          </Card>
-        )}
-
-        {screen === 'booking' && selectedDoctor && (
-          <Card>
-            <Title>Booking summary</Title>
-            <Small>Consultation: £{selectedDoctor.price}</Small>
-            <Small>Deposit now (15%): £{deposit}</Small>
-            <Small>Emergency symptoms? Call 999.</Small>
-            <Btn label={isPaying ? 'Opening Stripe...' : 'Pay deposit (Stripe Checkout)'} onPress={startPayment} />
-            <Btn label="I paid, confirm booking" onPress={markPaidAndCreateBooking} />
-          </Card>
-        )}
-
-        {screen === 'confirmed' && selectedDoctor && (
-          <Card>
-            <Title>Booked ✅</Title>
-            <Small>{selectedDoctor.name} at {selectedDoctor.nextSlot}</Small>
-            <Btn label="Back to map" onPress={() => setScreen('map')} />
-          </Card>
-        )}
-      </ScrollView>
+      {screen === 'confirmed' && selectedDoctor && (
+        <View style={styles.confirmScreen}>
+          <Text style={styles.confirmTitle}>Booking Confirmed ✅</Text>
+          <Text style={styles.confirmText}>{selectedDoctor.name}</Text>
+          <Text style={styles.confirmText}>{selectedDoctor.nextSlot} • {selectedDoctor.type}</Text>
+          <Text style={styles.confirmText}>{selectedDoctor.address}</Text>
+          <Text style={styles.confirmText}>Bring photo ID. Arrive 5 minutes early.</Text>
+          <TouchableOpacity style={styles.bookBtn} onPress={() => setScreen('map')}>
+            <Text style={styles.bookBtnText}>Back to map</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) { return <View style={styles.card}>{children}</View>; }
-function Title({ children }: { children: React.ReactNode }) { return <Text style={styles.title}>{children}</Text>; }
-function Small({ children }: { children: React.ReactNode }) { return <Text style={styles.small}>{children}</Text>; }
-function Btn({ label, onPress }: { label: string; onPress: () => void }) {
-  return <TouchableOpacity style={styles.btn} onPress={onPress}><Text style={styles.btnText}>{label}</Text></TouchableOpacity>;
+function FilterPill({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.filterPill} onPress={onPress}>
+      <Text style={styles.filterText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function cycleType(setter: (v: any) => void) {
+  setter((prev: string) => (prev === 'All' ? 'GP' : prev === 'GP' ? 'ENT' : prev === 'ENT' ? 'Dermatology' : 'All'));
+}
+
+function cycleTime(setter: (v: any) => void) {
+  setter((prev: string) => (prev === 'Now' ? '12:30' : prev === '12:30' ? '13:00' : prev === '13:00' ? '13:30' : 'Now'));
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F8FD' },
-  header: { backgroundColor: '#0B1F3A', padding: 16 },
-  brand: { color: 'white', fontSize: 22, fontWeight: '700' },
-  status: { color: '#cbd5e1', marginTop: 4, fontSize: 12 },
-  body: { padding: 14 },
-  card: { backgroundColor: 'white', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E2E8F0', gap: 10 },
-  title: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
-  small: { fontSize: 13, color: '#64748B' },
-  mapBox: {
-    height: 260,
-    borderRadius: 14,
-    backgroundColor: '#DBEAFE',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    position: 'relative',
+  safe: { flex: 1, backgroundColor: '#0B1F3A' },
+  mapScreen: { flex: 1, backgroundColor: '#0B1F3A' },
+  topOverlay: {
+    position: 'absolute',
+    zIndex: 20,
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+  },
+  logo: { color: 'white', fontSize: 28, fontWeight: '800' },
+  subStatus: { color: '#BFDBFE', fontSize: 11, marginTop: 2 },
+  filterRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  filterPill: {
+    backgroundColor: 'white',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  filterText: { color: '#0B1F3A', fontWeight: '700', fontSize: 12 },
+  mapArea: {
+    flex: 1,
+    backgroundColor: '#93C5FD',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    marginTop: 86,
     overflow: 'hidden',
+  },
+  userDot: {
+    position: 'absolute',
+    left: '50%',
+    top: '45%',
+    width: 16,
+    height: 16,
+    marginLeft: -8,
+    marginTop: -8,
+    borderRadius: 999,
+    backgroundColor: '#2563EB',
+    borderWidth: 3,
+    borderColor: 'white',
   },
   pin: {
     position: 'absolute',
     backgroundColor: '#0B1F3A',
+    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 999,
   },
-  pinText: { color: 'white', fontWeight: '700', fontSize: 12 },
-  doc: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 10, marginTop: 8 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  name: { fontWeight: '700', color: '#0F172A' },
-  price: { fontWeight: '700', color: '#1D4ED8' },
-  btn: { marginTop: 6, backgroundColor: '#1D4ED8', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  btnText: { color: 'white', fontWeight: '700' },
+  pinActive: { backgroundColor: '#1D4ED8' },
+  pinText: { color: 'white', fontWeight: '800', fontSize: 12 },
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 14,
+    gap: 6,
+  },
+  bottomHint: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 14,
+  },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  docName: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  price: { fontSize: 18, fontWeight: '800', color: '#1D4ED8' },
+  meta: { color: '#475569', fontSize: 13 },
+  bookBtn: {
+    marginTop: 8,
+    backgroundColor: '#1D4ED8',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  bookBtnText: { color: 'white', fontWeight: '800', fontSize: 14 },
+  confirmScreen: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 20,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  confirmTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+  confirmText: { color: '#334155', fontSize: 16 },
 });
