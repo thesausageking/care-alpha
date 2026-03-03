@@ -153,8 +153,6 @@ export default function App() {
           <View style={styles.header}>
             <Text style={styles.brand}>Care.</Text>
             <View style={styles.headerIcons}>
-              <CircleIcon name="remove" onPress={() => zoomBy(1.25)} />
-              <CircleIcon name="add" onPress={() => zoomBy(0.8)} />
               <CircleIcon name="shield-checkmark-outline" />
               <CircleIcon name="person-circle-outline" />
             </View>
