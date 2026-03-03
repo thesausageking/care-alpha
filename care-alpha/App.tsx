@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -105,6 +106,7 @@ export default function App() {
   const [reason, setReason] = useState<'Ear pain' | 'Fever' | 'Skin issue' | 'Other'>('Ear pain');
   const [triageSafe, setTriageSafe] = useState(true);
   const [appointmentType, setAppointmentType] = useState<VisitType>('Clinic');
+  const [reasonText, setReasonText] = useState('');
 
   const doctors = useMemo(
     () =>
@@ -120,6 +122,11 @@ export default function App() {
   );
 
   const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? doctors[0] ?? null;
+  const bookingProgress =
+    homeStage === 'booking1' ? 0.25 :
+    homeStage === 'booking2' ? 0.5 :
+    homeStage === 'booking3' ? 0.75 :
+    homeStage === 'booking4' ? 1 : 0;
 
 
   return (
@@ -232,62 +239,70 @@ export default function App() {
 
             {homeStage === 'booking1' && (
               <View style={styles.card}>
-                <Text style={styles.name}>Step 1 of 4</Text>
+                <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Confirm appointment type + time</Text>
                 <View style={styles.rowGap}>
                   {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((v) => (
-                    <SmallButton key={v} label={v} primary={appointmentType === v} onPress={() => setAppointmentType(v)} />
+                    <PillButton key={v} label={v} selected={appointmentType === v} onPress={() => setAppointmentType(v)} />
                   ))}
                 </View>
                 <View style={styles.rowGap}>
-                  <SmallButton label="Back" onPress={() => setHomeStage('home')} />
-                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking2')} />
+                  <BackButton onPress={() => setHomeStage('home')} />
+                  <NextButton onPress={() => setHomeStage('booking2')} />
                 </View>
               </View>
             )}
 
             {homeStage === 'booking2' && (
               <View style={styles.card}>
-                <Text style={styles.name}>Step 2 of 4</Text>
+                <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Reason for visit + safety screening</Text>
                 <View style={styles.rowGap}>
                   {(['Ear pain', 'Fever', 'Skin issue', 'Other'] as const).map((r) => (
-                    <SmallButton key={r} label={r} primary={reason === r} onPress={() => setReason(r)} />
+                    <PillButton key={r} label={r} selected={reason === r} onPress={() => setReason(r)} />
                   ))}
                 </View>
+                <TextInput
+                  style={styles.reasonInput}
+                  placeholder="Add details (optional)"
+                  placeholderTextColor="#94A3B8"
+                  value={reasonText}
+                  onChangeText={setReasonText}
+                  multiline
+                />
                 <View style={styles.rowGap}>
-                  <SmallButton label="No red flags" primary={triageSafe} onPress={() => setTriageSafe(true)} />
-                  <SmallButton label="Red flags" primary={!triageSafe} onPress={() => setTriageSafe(false)} />
+                  <PillButton label="No red flags" selected={triageSafe} onPress={() => setTriageSafe(true)} />
+                  <PillButton label="Red flags" selected={!triageSafe} onPress={() => setTriageSafe(false)} />
                 </View>
                 {!triageSafe && <Text style={styles.alert}>This may need urgent care guidance before booking.</Text>}
                 <View style={styles.rowGap}>
-                  <SmallButton label="Back" onPress={() => setHomeStage('booking1')} />
-                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking3')} />
+                  <BackButton onPress={() => setHomeStage('booking1')} />
+                  <NextButton onPress={() => setHomeStage('booking3')} />
                 </View>
               </View>
             )}
 
             {homeStage === 'booking3' && (
               <View style={styles.card}>
-                <Text style={styles.name}>Step 3 of 4</Text>
+                <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Location + accessibility notes</Text>
                 <Text style={styles.meta}>Using your current location for this alpha.</Text>
                 <View style={styles.rowGap}>
-                  <SmallButton label="Back" onPress={() => setHomeStage('booking2')} />
-                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking4')} />
+                  <BackButton onPress={() => setHomeStage('booking2')} />
+                  <NextButton onPress={() => setHomeStage('booking4')} />
                 </View>
               </View>
             )}
 
             {homeStage === 'booking4' && selectedDoctor && (
               <View style={styles.card}>
-                <Text style={styles.name}>Step 4 of 4</Text>
+                <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Deposit today: £{Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100)}</Text>
                 <Text style={styles.meta}>Remainder after appointment</Text>
                 <Text style={styles.meta}>Cancellation terms shown before payment</Text>
                 <View style={styles.rowGap}>
-                  <SmallButton label="Back" onPress={() => setHomeStage('booking3')} />
-                  <SmallButton label="Pay deposit" primary onPress={() => setHomeStage('bookingConfirmed')} />
+                  <BackButton onPress={() => setHomeStage('booking3')} />
+                  <NextButton label="Pay deposit" onPress={() => setHomeStage('bookingConfirmed')} />
                 </View>
               </View>
             )}
@@ -349,6 +364,34 @@ function SmallButton({ label, primary, onPress }: { label: string; primary?: boo
   );
 }
 
+function PillButton({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
+  return <SmallButton label={label} primary={selected} onPress={onPress} />;
+}
+
+function BackButton({ onPress }: { onPress?: () => void }) {
+  return (
+    <TouchableOpacity style={styles.backBtn} onPress={onPress}>
+      <Text style={styles.backBtnText}>Back</Text>
+    </TouchableOpacity>
+  );
+}
+
+function NextButton({ onPress, label = 'Next' }: { onPress?: () => void; label?: string }) {
+  return (
+    <TouchableOpacity style={styles.nextBtn} onPress={onPress}>
+      <Text style={styles.nextBtnText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ProgressBar({ progress }: { progress: number }) {
+  return (
+    <View style={styles.progressTrack}>
+      <View style={[styles.progressFill, { width: `${Math.max(0, Math.min(100, progress * 100))}%` }]} />
+    </View>
+  );
+}
+
 function CircleIcon({ name }: { name: keyof typeof Ionicons.glyphMap }) {
   return (
     <View style={styles.circle}>
@@ -395,6 +438,30 @@ const styles = StyleSheet.create({
   badge: { color: '#0F172A', fontWeight: '600', marginTop: 4 },
   meta: { color: '#475569', marginTop: 2 },
   alert: { color: '#B45309', marginTop: 6, fontWeight: '600' },
+  reasonInput: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    minHeight: 70,
+    textAlignVertical: 'top',
+    color: '#0F172A',
+    backgroundColor: '#F8FAFC',
+  },
+  progressTrack: {
+    width: '100%',
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 10,
+  },
+  progressFill: { height: 6, borderRadius: 999, backgroundColor: '#1D4ED8' },
+  backBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#E2E8F0' },
+  backBtnText: { color: '#334155', fontWeight: '700' },
+  nextBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#1D4ED8' },
+  nextBtnText: { color: '#fff', fontWeight: '700' },
   smallBtn: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: '#EEF2FF' },
   smallBtnPrimary: { backgroundColor: '#1D4ED8' },
   smallBtnText: { color: '#0F172A', fontWeight: '700' },
