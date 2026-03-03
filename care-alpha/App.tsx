@@ -15,6 +15,7 @@ type Tab = 'home' | 'bookings' | 'messages' | 'profile';
 type CareMode = 'ASAP' | 'Today' | 'Schedule';
 type VisitType = 'Video' | 'Home visit' | 'Clinic';
 type Availability = 'available' | 'limited' | 'unavailable' | 'offline';
+type FilterKey = 'mode' | 'visitType' | 'priceCap' | 'distance';
 
 type Doctor = {
   id: string;
@@ -98,6 +99,7 @@ export default function App() {
   const [priceCap, setPriceCap] = useState(120);
   const [visitType, setVisitType] = useState<VisitType>('Clinic');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(DOCTORS[0].id);
+  const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
 
   const doctors = useMemo(
     () =>
@@ -112,7 +114,6 @@ export default function App() {
     [distanceKm, priceCap, visitType],
   );
 
-  const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? null;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -129,12 +130,45 @@ export default function App() {
           </View>
 
           <View style={styles.filterBar}>
-            <View style={styles.rowGap}>
-              <Chip label={mode} onPress={() => setMode(mode === 'ASAP' ? 'Today' : mode === 'Today' ? 'Schedule' : 'ASAP')} />
-              <Chip label={visitType} onPress={() => setVisitType(visitType === 'Clinic' ? 'Video' : visitType === 'Video' ? 'Home visit' : 'Clinic')} />
-              <Chip label={`≤ £${priceCap}`} onPress={() => setPriceCap(priceCap === 120 ? 80 : priceCap === 80 ? 60 : 120)} />
-              <Chip label={`${distanceKm}km`} onPress={() => setDistanceKm(distanceKm === 3 ? 5 : distanceKm === 5 ? 10 : 3)} />
-            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowGap}>
+              <FilterChip label={mode} active={activeFilter === 'mode'} onPress={() => setActiveFilter(activeFilter === 'mode' ? null : 'mode')} />
+              <FilterChip label={visitType} active={activeFilter === 'visitType'} onPress={() => setActiveFilter(activeFilter === 'visitType' ? null : 'visitType')} />
+              <FilterChip label={`≤ £${priceCap}`} active={activeFilter === 'priceCap'} onPress={() => setActiveFilter(activeFilter === 'priceCap' ? null : 'priceCap')} />
+              <FilterChip label={`${distanceKm}km`} active={activeFilter === 'distance'} onPress={() => setActiveFilter(activeFilter === 'distance' ? null : 'distance')} />
+            </ScrollView>
+
+            {activeFilter === 'mode' && (
+              <View style={styles.dropdownRow}>
+                {(['ASAP', 'Today', 'Schedule'] as CareMode[]).map((item) => (
+                  <SmallButton key={item} label={item} primary={item === mode} onPress={() => { setMode(item); setActiveFilter(null); }} />
+                ))}
+              </View>
+            )}
+
+            {activeFilter === 'visitType' && (
+              <View style={styles.dropdownRow}>
+                {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((item) => (
+                  <SmallButton key={item} label={item} primary={item === visitType} onPress={() => { setVisitType(item); setActiveFilter(null); }} />
+                ))}
+              </View>
+            )}
+
+            {activeFilter === 'priceCap' && (
+              <View style={styles.dropdownRow}>
+                {[60, 80, 120, 160].map((item) => (
+                  <SmallButton key={item} label={`≤ £${item}`} primary={item === priceCap} onPress={() => { setPriceCap(item); setActiveFilter(null); }} />
+                ))}
+              </View>
+            )}
+
+            {activeFilter === 'distance' && (
+              <View style={styles.dropdownRow}>
+                {[3, 5, 10, 20].map((item) => (
+                  <SmallButton key={item} label={`${item}km`} primary={item === distanceKm} onPress={() => { setDistanceKm(item); setActiveFilter(null); }} />
+                ))}
+              </View>
+            )}
+
             <Text style={styles.filterMeta}>Only verified + insured</Text>
           </View>
 
@@ -170,12 +204,7 @@ export default function App() {
             </ScrollView>
           </View>
 
-          {selectedDoctor && (
-            <View style={styles.preview}>
-              <Text style={styles.previewTitle}>{selectedDoctor.name}</Text>
-              <Text style={styles.previewMeta}>{selectedDoctor.availabilityLabel} • £{selectedDoctor.priceFrom}</Text>
-            </View>
-          )}
+
         </View>
       ) : (
         <View style={styles.placeholder}>
@@ -201,10 +230,10 @@ function markerColor(a: Availability) {
   return { backgroundColor: '#94A3B8' };
 }
 
-function Chip({ label, onPress }: { label: string; onPress?: () => void }) {
+function FilterChip({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
   return (
-    <TouchableOpacity style={styles.chip} onPress={onPress}>
-      <Text style={styles.chipText}>{label}</Text>
+    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label} ▾</Text>
     </TouchableOpacity>
   );
 }
@@ -242,15 +271,18 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: 'row', gap: 8 },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   filterBar: { paddingHorizontal: 16, paddingBottom: 8 },
-  rowGap: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  chip: { backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 999 },
+  rowGap: { flexDirection: 'row', gap: 8 },
+  chip: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999 },
+  chipActive: { backgroundColor: '#1D4ED8' },
   chipText: { color: '#0F172A', fontWeight: '600' },
-  filterMeta: { marginTop: 6, color: '#0F172A', fontSize: 12, fontWeight: '600' },
+  chipTextActive: { color: '#fff' },
+  dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 8 },
+  filterMeta: { marginTop: 8, color: '#0F172A', fontSize: 12, fontWeight: '600' },
   map: { height: 260, marginHorizontal: 16, borderRadius: 16 },
   marker: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 6 },
   markerActive: { borderWidth: 2, borderColor: '#0F172A' },
   markerText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 84 },
+  listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 110 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: '#0F172A', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
@@ -261,9 +293,6 @@ const styles = StyleSheet.create({
   smallBtnPrimary: { backgroundColor: '#1D4ED8' },
   smallBtnText: { color: '#0F172A', fontWeight: '700' },
   smallBtnTextPrimary: { color: '#fff' },
-  preview: { position: 'absolute', left: 16, right: 16, bottom: 74, backgroundColor: '#fff', borderRadius: 14, padding: 12 },
-  previewTitle: { fontWeight: '700', color: '#0F172A' },
-  previewMeta: { color: '#475569', marginTop: 2 },
   nav: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 8 },
   navItem: { flex: 1, alignItems: 'center', gap: 2 },
   navText: { fontSize: 12, color: '#64748B' },
