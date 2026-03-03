@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Care Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <h1>Care</h1>
+      <div class="mode-toggle">
+        <button id="patientMode" class="active">Patient</button>
+        <button id="doctorMode">Doctor</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="screen" class="phone"></section>
+    </main>
+
+    <footer>
+      <button id="backBtn" class="ghost">Back</button>
+      <button id="resetBtn" class="ghost">Reset</button>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
