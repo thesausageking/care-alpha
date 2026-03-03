@@ -156,11 +156,8 @@ export default function App() {
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
             <Text style={[styles.introLetter, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={styles.introUnderscore}>_</Text>
             <Text style={[styles.introLetter, introStep >= 2 && styles.introLetterOn]}>a</Text>
-            <Text style={styles.introUnderscore}>_</Text>
             <Text style={[styles.introLetter, introStep >= 3 && styles.introLetterOn]}>r</Text>
-            <Text style={styles.introUnderscore}>_</Text>
             <Text style={[styles.introLetter, introStep >= 4 && styles.introLetterOn]}>e</Text>
             <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
           </View>
@@ -492,13 +489,6 @@ const styles = StyleSheet.create({
     color: '#DBEAFE',
     marginHorizontal: 2,
     opacity: 0.2,
-    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
-  },
-  introUnderscore: {
-    fontSize: 46,
-    color: '#BFDBFE',
-    marginHorizontal: 2,
-    marginBottom: 4,
     fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
   },
   introLetterOn: { color: '#fff', opacity: 1 },
