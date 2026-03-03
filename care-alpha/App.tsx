@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Platform,
   SafeAreaView,
@@ -45,6 +45,7 @@ export default function App() {
   const [patientId, setPatientId] = useState<string | null>(null);
   const [status, setStatus] = useState('Loading map...');
   const [region, setRegion] = useState<Region>(LONDON_REGION);
+  const mapRef = useRef<MapView | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>(DOCTORS);
   const [selectedTime, setSelectedTime] = useState('12:00');
   const [showTimeMenu, setShowTimeMenu] = useState(false);
@@ -66,21 +67,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      const { status: perm } = await Location.requestForegroundPermissionsAsync();
-      if (perm !== 'granted') {
-        setStatus('Location denied • defaulting to London');
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({});
-      setRegion({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      });
-      setStatus('');
-    })();
+    recenterToUser();
   }, []);
 
   useEffect(() => {
@@ -112,6 +99,27 @@ export default function App() {
 
   const filteredDoctors = useMemo(() => doctors.filter((d) => d.availableTimes.includes(selectedTime)), [doctors, selectedTime]);
   const deposit = useMemo(() => Number((((selectedDoctor?.price ?? 0) * 0.15).toFixed(2)),), [selectedDoctor]);
+
+  const recenterToUser = async () => {
+    const { status: perm } = await Location.requestForegroundPermissionsAsync();
+    if (perm !== 'granted') {
+      setStatus('Location denied • defaulting to London');
+      setRegion(LONDON_REGION);
+      mapRef.current?.animateToRegion(LONDON_REGION, 450);
+      return;
+    }
+
+    const pos = await Location.getCurrentPositionAsync({});
+    const next = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
+    };
+    setRegion(next);
+    mapRef.current?.animateToRegion(next, 450);
+    setStatus('');
+  };
 
   const startPayment = async () => {
     if (!selectedDoctor) return;
@@ -157,7 +165,7 @@ export default function App() {
 
       {screen === 'map' && (
         <View style={styles.container}>
-          <MapView style={styles.map} region={region} showsUserLocation showsMyLocationButton>
+          <MapView ref={mapRef} style={styles.map} region={region} showsUserLocation showsMyLocationButton>
             {filteredDoctors.map((d) => (
               <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelectedDoctor(d)}>
                 <View style={[styles.markerChip, selectedDoctor?.id === d.id && styles.markerChipActive]}>
@@ -170,7 +178,7 @@ export default function App() {
           <View style={styles.floatingTop}>
             <View style={styles.iconRow}>
               <CircleIcon name="chevron-back" />
-              <CircleIcon name="locate" onPress={() => setRegion({ ...region })} />
+              <CircleIcon name="locate" onPress={recenterToUser} />
             </View>
             <Text style={styles.brand}>Care</Text>
             {!!status && <Text style={styles.status}>{status}</Text>}
