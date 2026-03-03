@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -271,7 +272,7 @@ export default function App() {
                 <Text style={styles.meta}>Deposit now: {selectedDoctor.deposit}%</Text>
                 <Text style={styles.meta}>Remainder after appointment</Text>
                 <Text style={styles.meta}>Cancellation cutoff: 2h before appointment</Text>
-                <Text style={styles.meta}>Not for emergencies. Urgent symptoms -> NHS 111 / 999.</Text>
+                <Text style={styles.meta}>Not for emergencies. Urgent symptoms → NHS 111 / 999.</Text>
                 <View style={styles.rowGap}>
                   <SmallButton label="Back" onPress={() => setHomeStage('home')} />
                   <SmallButton label="Book now" primary onPress={() => setHomeStage('booking1')} />
@@ -339,7 +340,7 @@ export default function App() {
                 <Text style={styles.name}>Booking confirmed</Text>
                 <Text style={styles.meta}>What happens next:</Text>
                 <Text style={styles.meta}>• Appointment confirmed</Text>
-                <Text style={styles.meta}>• Status updates: confirmed -> starting soon</Text>
+                <Text style={styles.meta}>• Status updates: confirmed → starting soon</Text>
                 <Text style={styles.meta}>• Messaging is enabled with safety guidelines</Text>
                 <Text style={styles.meta}>• Pricing + cancellation terms were shown before payment</Text>
                 <View style={styles.rowGap}>
