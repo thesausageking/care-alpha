@@ -246,7 +246,7 @@ export default function App() {
             )}
 
             {homeStage === 'doctorProfile' && selectedDoctor && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <Text style={styles.name}>{selectedDoctor.name}</Text>
                 <Text style={styles.badge}>Verified clinician • GMC registered • Insured</Text>
                 <Text style={styles.meta}>Available: {selectedDoctor.availabilityLabel}</Text>
@@ -263,7 +263,7 @@ export default function App() {
             )}
 
             {homeStage === 'booking1' && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Confirm appointment type + time</Text>
                 <View style={styles.rowGap}>
@@ -279,7 +279,7 @@ export default function App() {
             )}
 
             {homeStage === 'booking2' && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Reason for visit + safety screening</Text>
                 <TextInput
@@ -299,7 +299,7 @@ export default function App() {
             )}
 
             {homeStage === 'booking3' && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Location + accessibility notes</Text>
                 <Text style={styles.meta}>Using your current location for this alpha.</Text>
@@ -311,7 +311,7 @@ export default function App() {
             )}
 
             {homeStage === 'booking4' && selectedDoctor && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Deposit today: £{Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100)}</Text>
                 <Text style={styles.meta}>Remainder after appointment</Text>
@@ -324,7 +324,7 @@ export default function App() {
             )}
 
             {homeStage === 'bookingConfirmed' && selectedDoctor && (
-              <View style={styles.card}>
+              <View style={[styles.card, styles.stageCard]}>
                 <Text style={styles.name}>Booking confirmed</Text>
                 <Text style={styles.meta}>What happens next:</Text>
                 <Text style={styles.meta}>• Appointment confirmed</Text>
@@ -458,6 +458,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+  },
+  stageCard: {
+    flex: 1,
+    marginBottom: 0,
   },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
