@@ -155,10 +155,10 @@ export default function App() {
       {showIntro ? (
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
-            <Text style={[styles.introLetter, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={[styles.introLetter, introStep >= 2 && styles.introLetterOn]}>a</Text>
-            <Text style={[styles.introLetter, introStep >= 3 && styles.introLetterOn]}>r</Text>
-            <Text style={[styles.introLetter, introStep >= 4 && styles.introLetterOn]}>e</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -26 }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -26 }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -26 }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -26 }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
             <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
           </View>
         </View>
@@ -481,24 +481,24 @@ function NavItem({ label, icon, active, onPress }: { label: string; icon: keyof 
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
-  introWrap: { flex: 1, backgroundColor: '#1D4ED8', alignItems: 'center', justifyContent: 'center' },
+  introWrap: { flex: 1, backgroundColor: '#0B1F3A', alignItems: 'center', justifyContent: 'center' },
   introRow: { flexDirection: 'row', alignItems: 'flex-end' },
   introLetter: {
     fontSize: 52,
-    fontWeight: '300',
-    color: '#DBEAFE',
+    fontWeight: '200',
+    color: '#BFDBFE',
     marginHorizontal: 2,
-    opacity: 0.2,
+    opacity: 0.15,
     fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
   },
   introLetterOn: { color: '#fff', opacity: 1 },
   introDot: {
     fontSize: 52,
-    fontWeight: '300',
+    fontWeight: '200',
     color: '#93C5FD',
     marginLeft: 2,
     opacity: 0,
-    transform: [{ translateX: 14 }],
+    transform: [{ translateX: 26 }],
     fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
   },
   introDotOn: { opacity: 1, transform: [{ translateX: 0 }], color: '#fff' },
