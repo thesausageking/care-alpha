@@ -109,6 +109,8 @@ export default function App() {
   const [triageSafe, setTriageSafe] = useState(true);
   const [appointmentType, setAppointmentType] = useState<VisitType>('Clinic');
   const [reasonText, setReasonText] = useState('');
+  const [bookingStatus, setBookingStatus] = useState<'confirmed' | 'starting_soon' | 'completed'>('confirmed');
+  const [reviewStars, setReviewStars] = useState(0);
 
   const doctors = useMemo(
     () =>
@@ -318,7 +320,7 @@ export default function App() {
                 <Text style={styles.meta}>Cancellation terms shown before payment</Text>
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking3')} />
-                  <NextButton label="Pay deposit" onPress={() => setHomeStage('bookingConfirmed')} />
+                  <NextButton label="Pay deposit" onPress={() => { setHomeStage('bookingConfirmed'); setTab('bookings'); setBookingStatus('confirmed'); }} />
                 </View>
               </View>
             )}
@@ -340,10 +342,51 @@ export default function App() {
 
 
         </View>
+      ) : tab === 'bookings' ? (
+        <View style={styles.placeholder}>
+          <View style={styles.card}>
+            <Text style={styles.placeholderTitle}>Booking status</Text>
+            <Text style={styles.meta}>{selectedDoctor?.name ?? 'Dr Khan'} • Today 12:40</Text>
+            <Text style={styles.meta}>Status: {bookingStatus === 'confirmed' ? 'Confirmed' : bookingStatus === 'starting_soon' ? 'Starting soon' : 'Completed'}</Text>
+            <Text style={styles.meta}>Deposit paid: £{selectedDoctor ? Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100) : 0}</Text>
+            <Text style={styles.meta}>Remainder after appointment</Text>
+            <View style={styles.rowGap}>
+              <SmallButton label="Mark starting soon" onPress={() => setBookingStatus('starting_soon')} />
+              <SmallButton label="Mark completed" primary onPress={() => setBookingStatus('completed')} />
+            </View>
+            <Text style={styles.meta}>Receipt: Download PDF (placeholder)</Text>
+          </View>
+
+          {bookingStatus === 'completed' && (
+            <View style={[styles.card, { marginTop: 10 }]}>
+              <Text style={styles.placeholderTitle}>Leave review</Text>
+              <View style={styles.rowGap}>
+                {[1,2,3,4,5].map((n) => (
+                  <TouchableOpacity key={n} onPress={() => setReviewStars(n)}>
+                    <Ionicons name={n <= reviewStars ? 'star' : 'star-outline'} size={22} color="#F59E0B" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      ) : tab === 'messages' ? (
+        <View style={styles.placeholder}>
+          <View style={styles.card}>
+            <Text style={styles.placeholderTitle}>Messages</Text>
+            <Text style={styles.meta}>Clinician-safe chat enabled.</Text>
+            <Text style={styles.meta}>No personal phone numbers or contact details allowed.</Text>
+            <Text style={styles.meta}>Photo upload with consent prompt (M3 placeholder).</Text>
+            <Text style={styles.meta}>Report an issue is always available.</Text>
+          </View>
+        </View>
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderTitle}>{tab[0].toUpperCase() + tab.slice(1)}</Text>
-          <Text style={styles.placeholderText}>M1 shell ready. This module is next.</Text>
+          <View style={styles.card}>
+            <Text style={styles.placeholderTitle}>Profile & Payments</Text>
+            <Text style={styles.meta}>Deposit now, remainder later.</Text>
+            <Text style={styles.meta}>Itemised receipts and cancellation terms shown before payment.</Text>
+          </View>
         </View>
       )}
 
