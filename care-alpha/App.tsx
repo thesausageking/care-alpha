@@ -271,7 +271,7 @@ export default function App() {
             {homeStage === 'booking1' && (
               <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
-                <Text style={styles.meta}>Confirm appointment type + time</Text>
+                <Text style={styles.meta}>Confirm appointment type</Text>
                 <View style={styles.rowGap}>
                   {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((v) => (
                     <PillButton key={v} label={v} selected={appointmentType === v} onPress={() => setAppointmentType(v)} />
@@ -287,7 +287,7 @@ export default function App() {
             {homeStage === 'booking2' && (
               <View style={[styles.card, styles.stageCard]}>
                 <ProgressBar progress={bookingProgress} />
-                <Text style={styles.meta}>Reason for visit + safety screening</Text>
+                <Text style={styles.meta}>What is the reason for your visit?</Text>
                 <TextInput
                   style={styles.reasonInput}
                   placeholder="Describe your reason for visiting"
