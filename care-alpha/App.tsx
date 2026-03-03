@@ -155,9 +155,12 @@ export default function App() {
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
             <Text style={[styles.introLetter, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={[styles.introLetter, introStep >= 2 && styles.introLetterOn]}>A</Text>
-            <Text style={[styles.introLetter, introStep >= 3 && styles.introLetterOn]}>R</Text>
-            <Text style={[styles.introLetter, introStep >= 4 && styles.introLetterOn]}>E</Text>
+            <Text style={styles.introUnderscore}>_</Text>
+            <Text style={[styles.introLetter, introStep >= 2 && styles.introLetterOn]}>a</Text>
+            <Text style={styles.introUnderscore}>_</Text>
+            <Text style={[styles.introLetter, introStep >= 3 && styles.introLetterOn]}>r</Text>
+            <Text style={styles.introUnderscore}>_</Text>
+            <Text style={[styles.introLetter, introStep >= 4 && styles.introLetterOn]}>e</Text>
             <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
           </View>
         </View>
@@ -482,9 +485,31 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   introWrap: { flex: 1, backgroundColor: '#1D4ED8', alignItems: 'center', justifyContent: 'center' },
   introRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  introLetter: { fontSize: 52, fontWeight: '300', color: '#DBEAFE', marginHorizontal: 3, opacity: 0.2 },
+  introLetter: {
+    fontSize: 52,
+    fontWeight: '300',
+    color: '#DBEAFE',
+    marginHorizontal: 2,
+    opacity: 0.2,
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
+  },
+  introUnderscore: {
+    fontSize: 46,
+    color: '#BFDBFE',
+    marginHorizontal: 2,
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
+  },
   introLetterOn: { color: '#fff', opacity: 1 },
-  introDot: { fontSize: 52, fontWeight: '700', color: '#93C5FD', marginLeft: 2, opacity: 0, transform: [{ translateX: 14 }] },
+  introDot: {
+    fontSize: 52,
+    fontWeight: '300',
+    color: '#93C5FD',
+    marginLeft: 2,
+    opacity: 0,
+    transform: [{ translateX: 14 }],
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
+  },
   introDotOn: { opacity: 1, transform: [{ translateX: 0 }], color: '#fff' },
   homeWrap: { flex: 1, paddingHorizontal: 4 },
   header: { paddingHorizontal: 0, paddingTop: 8, paddingBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
