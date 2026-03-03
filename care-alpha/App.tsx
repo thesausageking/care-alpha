@@ -13,7 +13,7 @@ import MapView, { Marker, Region } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 
 type Tab = 'home' | 'bookings' | 'messages' | 'profile';
-type HomeStage = 'home' | 'doctorProfile' | 'booking1' | 'booking2' | 'booking3' | 'booking4' | 'bookingConfirmed';
+type HomeStage = 'home' | 'doctorProfile' | 'booking1' | 'booking2' | 'booking4' | 'bookingConfirmed';
 type CareMode = 'ASAP' | 'Today' | 'Schedule';
 type VisitType = 'Video' | 'Home visit' | 'Clinic';
 type Availability = 'available' | 'limited' | 'unavailable' | 'offline';
@@ -138,9 +138,8 @@ export default function App() {
   };
 
   const bookingProgress =
-    homeStage === 'booking1' ? 0.25 :
-    homeStage === 'booking2' ? 0.5 :
-    homeStage === 'booking3' ? 0.75 :
+    homeStage === 'booking1' ? 0.34 :
+    homeStage === 'booking2' ? 0.67 :
     homeStage === 'booking4' ? 1 : 0;
 
 
@@ -300,22 +299,11 @@ export default function App() {
 
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking1')} />
-                  <NextButton onPress={() => setHomeStage('booking3')} />
-                </View>
-              </View>
-            )}
-
-            {homeStage === 'booking3' && (
-              <View style={[styles.card, styles.stageCard]}>
-                <ProgressBar progress={bookingProgress} />
-                <Text style={styles.meta}>Location + accessibility notes</Text>
-                <Text style={styles.meta}>Using your current location for this alpha.</Text>
-                <View style={styles.rowGap}>
-                  <BackButton onPress={() => setHomeStage('booking2')} />
                   <NextButton onPress={() => setHomeStage('booking4')} />
                 </View>
               </View>
             )}
+
 
             {homeStage === 'booking4' && selectedDoctor && (
               <View style={[styles.card, styles.stageCard]}>
@@ -324,7 +312,7 @@ export default function App() {
                 <Text style={styles.meta}>Remainder after appointment</Text>
                 <Text style={styles.meta}>Cancellation terms shown before payment</Text>
                 <View style={styles.rowGap}>
-                  <BackButton onPress={() => setHomeStage('booking3')} />
+                  <BackButton onPress={() => setHomeStage('booking2')} />
                   <NextButton label="Pay deposit" onPress={() => { setHomeStage('bookingConfirmed'); setTab('bookings'); setBookingStatus('confirmed'); }} />
                 </View>
               </View>
