@@ -25,14 +25,17 @@ Deno.serve(async (req) => {
       doctorName,
       consultationPriceGbp,
       depositGbp,
+      returnUrl,
     } = body;
 
     const depositPence = Math.round(Number(depositGbp) * 100);
 
+    const safeReturnUrl = returnUrl || 'https://example.com/success';
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      success_url: 'https://example.com/success',
-      cancel_url: 'https://example.com/cancel',
+      success_url: safeReturnUrl,
+      cancel_url: safeReturnUrl.replace('payment=success', 'payment=cancel'),
       line_items: [
         {
           quantity: 1,

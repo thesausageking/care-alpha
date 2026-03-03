@@ -55,6 +55,40 @@ export default function App() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    (async () => {
+      const url = new URL((globalThis as any).location.href);
+      const payment = url.searchParams.get('payment');
+      if (payment !== 'success') return;
+
+      const raw = (globalThis as any).localStorage?.getItem('care_pending_booking');
+      if (!raw) return;
+
+      try {
+        const pending = JSON.parse(raw);
+        await supabase.from('bookings').insert({
+          patient_id: pending.patientId,
+          doctor_id: pending.doctorId,
+          consultation_price_gbp: pending.consultationPriceGbp,
+          deposit_gbp: pending.depositGbp,
+        });
+
+        const doc = DOCTORS.find((d) => d.id === pending.doctorId) ?? null;
+        if (doc) setSelectedDoctor(doc);
+        setScreen('confirmed');
+        setStatus('Payment complete ✅ Booking confirmed');
+      } catch (e: any) {
+        setStatus(`Return handling failed: ${e.message}`);
+      } finally {
+        (globalThis as any).localStorage?.removeItem('care_pending_booking');
+        url.searchParams.delete('payment');
+        (globalThis as any).history.replaceState({}, '', url.toString());
+      }
+    })();
+  }, []);
+
   const startPayment = async () => {
     if (!selectedDoctor) {
       setStatus('Pick a doctor first');
@@ -74,6 +108,15 @@ export default function App() {
 
     try {
       setIsPaying(true);
+      const returnUrl = Platform.OS === 'web' ? `${(globalThis as any).location.origin}?payment=success` : 'care://payment-success';
+
+      if (Platform.OS === 'web') {
+        (globalThis as any).localStorage?.setItem(
+          'care_pending_booking',
+          JSON.stringify({ patientId, doctorId: selectedDoctor.id, consultationPriceGbp: selectedDoctor.price, depositGbp: deposit, doctorName: selectedDoctor.name }),
+        );
+      }
+
       const res = await fetch(`${paymentsApi}/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,6 +126,7 @@ export default function App() {
           doctorName: selectedDoctor.name,
           consultationPriceGbp: selectedDoctor.price,
           depositGbp: deposit,
+          returnUrl,
         }),
       });
 
