@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1 },
   map: { flex: 1 },
-  floatingTop: { position: 'absolute', top: 10, left: 12, right: 12 },
+  floatingTop: { position: 'absolute', top: 20, left: 12, right: 12 },
   iconRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, alignItems: 'center' },
   iconRowRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' },
