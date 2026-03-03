@@ -9,7 +9,7 @@ type Doctor = { id: string; name: string; price: number; rating: number; nextSlo
 export default function App() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [screen, setScreen] = useState<'welcome' | 'list' | 'profile' | 'booking' | 'confirmed'>('welcome');
+  const [screen, setScreen] = useState<'welcome' | 'map' | 'profile' | 'booking' | 'confirmed'>('welcome');
   const [status, setStatus] = useState('Connecting...');
   const [patientId, setPatientId] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
@@ -175,26 +175,47 @@ export default function App() {
           <Card>
             <Title>Private doctor booking in London</Title>
             <Small>In-person • 15 mins • 18+ only</Small>
-            <Btn label="Browse doctors" onPress={() => setScreen('list')} />
+            <Btn label="Open map" onPress={() => setScreen('map')} />
           </Card>
         )}
 
-        {screen === 'list' && (
+        {screen === 'map' && (
           <Card>
-            <Title>Doctors near you</Title>
-            {doctors.map((d) => (
-              <TouchableOpacity
-                key={d.id}
-                style={styles.doc}
-                onPress={() => {
-                  setSelectedDoctor(d);
-                  setScreen('profile');
-                }}
-              >
-                <View style={styles.row}><Text style={styles.name}>{d.name}</Text><Text style={styles.price}>£{d.price}</Text></View>
-                <Text style={styles.small}>★ {d.rating} • Next {d.nextSlot}</Text>
-              </TouchableOpacity>
-            ))}
+            <Title>Map: doctors near you</Title>
+            <View style={styles.mapBox}>
+              {doctors.map((d, i) => {
+                const pinStyle = [
+                  styles.pin,
+                  { left: `${18 + ((i * 23) % 62)}%`, top: `${20 + ((i * 19) % 55)}%` },
+                ] as const;
+                return (
+                  <TouchableOpacity
+                    key={d.id}
+                    style={pinStyle}
+                    onPress={() => {
+                      setSelectedDoctor(d);
+                      setScreen('profile');
+                    }}
+                  >
+                    <Text style={styles.pinText}>£{d.price}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {selectedDoctor ? (
+              <View style={styles.doc}>
+                <View style={styles.row}>
+                  <Text style={styles.name}>{selectedDoctor.name}</Text>
+                  <Text style={styles.price}>£{selectedDoctor.price}</Text>
+                </View>
+                <Text style={styles.small}>★ {selectedDoctor.rating} • Next {selectedDoctor.nextSlot}</Text>
+                <Btn label="Book now" onPress={() => setScreen('booking')} />
+              </View>
+            ) : (
+              <Small>Tap a price pin to select a doctor.</Small>
+            )}
+
             {!doctors.length && <Small>No doctors online yet. Add doctor rows in Supabase.</Small>}
           </Card>
         )}
@@ -224,7 +245,7 @@ export default function App() {
           <Card>
             <Title>Booked ✅</Title>
             <Small>{selectedDoctor.name} at {selectedDoctor.nextSlot}</Small>
-            <Btn label="Done" onPress={() => setScreen('welcome')} />
+            <Btn label="Back to map" onPress={() => setScreen('map')} />
           </Card>
         )}
       </ScrollView>
@@ -248,6 +269,23 @@ const styles = StyleSheet.create({
   card: { backgroundColor: 'white', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E2E8F0', gap: 10 },
   title: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
   small: { fontSize: 13, color: '#64748B' },
+  mapBox: {
+    height: 260,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  pin: {
+    position: 'absolute',
+    backgroundColor: '#0B1F3A',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  pinText: { color: 'white', fontWeight: '700', fontSize: 12 },
   doc: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 10, marginTop: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   name: { fontWeight: '700', color: '#0F172A' },
