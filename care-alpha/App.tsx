@@ -257,24 +257,23 @@ export default function App() {
               <View style={styles.card}>
                 <ProgressBar progress={bookingProgress} />
                 <Text style={styles.meta}>Reason for visit + safety screening</Text>
-                <View style={styles.rowGap}>
-                  {(['Ear pain', 'Fever', 'Skin issue', 'Other'] as const).map((r) => (
-                    <PillButton key={r} label={r} selected={reason === r} onPress={() => setReason(r)} />
-                  ))}
-                </View>
                 <TextInput
                   style={styles.reasonInput}
-                  placeholder="Add details (optional)"
+                  placeholder="Describe your reason for visiting"
                   placeholderTextColor="#94A3B8"
                   value={reasonText}
                   onChangeText={setReasonText}
                   multiline
                 />
-                <View style={styles.rowGap}>
-                  <PillButton label="No red flags" selected={triageSafe} onPress={() => setTriageSafe(true)} />
-                  <PillButton label="Red flags" selected={!triageSafe} onPress={() => setTriageSafe(false)} />
-                </View>
-                {!triageSafe && <Text style={styles.alert}>This may need urgent care guidance before booking.</Text>}
+                <TextInput
+                  style={styles.reasonInput}
+                  placeholder="Any urgent warning symptoms? (yes/no + details)"
+                  placeholderTextColor="#94A3B8"
+                  value={triageSafe ? '' : 'Red flags noted'}
+                  onChangeText={(t) => setTriageSafe(!t.toLowerCase().includes('yes') && !t.toLowerCase().includes('red'))}
+                  multiline
+                />
+                {!triageSafe && <Text style={styles.alert}>Urgent symptoms detected. Show urgent care guidance before booking.</Text>}
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking1')} />
                   <NextButton onPress={() => setHomeStage('booking3')} />
@@ -371,6 +370,7 @@ function PillButton({ label, selected, onPress }: { label: string; selected?: bo
 function BackButton({ onPress }: { onPress?: () => void }) {
   return (
     <TouchableOpacity style={styles.backBtn} onPress={onPress}>
+      <Ionicons name="arrow-back" size={14} color="#0F172A" />
       <Text style={styles.backBtnText}>Back</Text>
     </TouchableOpacity>
   );
@@ -380,6 +380,7 @@ function NextButton({ onPress, label = 'Next' }: { onPress?: () => void; label?:
   return (
     <TouchableOpacity style={styles.nextBtn} onPress={onPress}>
       <Text style={styles.nextBtnText}>{label}</Text>
+      <Ionicons name="arrow-forward" size={14} color="#fff" />
     </TouchableOpacity>
   );
 }
@@ -458,11 +459,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   progressFill: { height: 6, borderRadius: 999, backgroundColor: '#1D4ED8' },
-  backBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#E2E8F0' },
-  backBtnText: { color: '#334155', fontWeight: '700' },
-  nextBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#1D4ED8' },
+  backBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  backBtnText: { color: '#0F172A', fontWeight: '700' },
+  nextBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 10,
+    backgroundColor: '#0F172A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   nextBtnText: { color: '#fff', fontWeight: '700' },
-  smallBtn: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: '#EEF2FF' },
+  smallBtn: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999, backgroundColor: '#EEF2FF' },
   smallBtnPrimary: { backgroundColor: '#1D4ED8' },
   smallBtnText: { color: '#0F172A', fontWeight: '700' },
   smallBtnTextPrimary: { color: '#fff' },
