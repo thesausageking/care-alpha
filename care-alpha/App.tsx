@@ -12,6 +12,7 @@ import MapView, { Marker, Region } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 
 type Tab = 'home' | 'bookings' | 'messages' | 'profile';
+type HomeStage = 'home' | 'doctorProfile' | 'booking1' | 'booking2' | 'booking3' | 'booking4' | 'bookingConfirmed';
 type CareMode = 'ASAP' | 'Today' | 'Schedule';
 type VisitType = 'Video' | 'Home visit' | 'Clinic';
 type Availability = 'available' | 'limited' | 'unavailable' | 'offline';
@@ -100,6 +101,10 @@ export default function App() {
   const [visitType, setVisitType] = useState<VisitType>('Clinic');
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(DOCTORS[0].id);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [homeStage, setHomeStage] = useState<HomeStage>('home');
+  const [reason, setReason] = useState<'Ear pain' | 'Fever' | 'Skin issue' | 'Other'>('Ear pain');
+  const [triageSafe, setTriageSafe] = useState(true);
+  const [appointmentType, setAppointmentType] = useState<VisitType>('Clinic');
 
   const doctors = useMemo(
     () =>
@@ -113,6 +118,8 @@ export default function App() {
       ),
     [distanceKm, priceCap, visitType],
   );
+
+  const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? doctors[0] ?? null;
 
 
   return (
@@ -184,25 +191,120 @@ export default function App() {
           </MapView>
 
           <View style={styles.listWrap}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {doctors.map((d) => (
-                <View key={d.id} style={styles.card}>
-                  <View style={styles.rowBetween}>
-                    <Text style={styles.name}>{d.name}</Text>
-                    <Text style={styles.price}>from £{d.priceFrom}</Text>
+            {homeStage === 'home' && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {doctors.map((d) => (
+                  <View key={d.id} style={styles.card}>
+                    <View style={styles.rowBetween}>
+                      <Text style={styles.name}>{d.name}</Text>
+                      <Text style={styles.price}>from £{d.priceFrom}</Text>
+                    </View>
+                    <Text style={styles.meta}>{d.specialty}</Text>
+                    <Text style={styles.badge}>GMC registered</Text>
+                    <Text style={styles.meta}>{d.availabilityLabel}</Text>
+                    <Text style={styles.meta}>Deposit today: {d.deposit}%</Text>
+                    <Text style={styles.meta}>{d.rating} • {d.reviewCount} reviews</Text>
+                    <View style={styles.rowGap}>
+                      <SmallButton label="View" onPress={() => { setSelectedDoctorId(d.id); setHomeStage('doctorProfile'); }} />
+                      <SmallButton label="Book" primary onPress={() => { setSelectedDoctorId(d.id); setHomeStage('booking1'); }} />
+                    </View>
                   </View>
-                  <Text style={styles.meta}>{d.specialty}</Text>
-                  <Text style={styles.badge}>GMC registered</Text>
-                  <Text style={styles.meta}>{d.availabilityLabel}</Text>
-                  <Text style={styles.meta}>Deposit today: {d.deposit}%</Text>
-                  <Text style={styles.meta}>{d.rating} • {d.reviewCount} reviews</Text>
-                  <View style={styles.rowGap}>
-                    <SmallButton label="View" onPress={() => setSelectedDoctorId(d.id)} />
-                    <SmallButton label="Book" primary onPress={() => setSelectedDoctorId(d.id)} />
-                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            {homeStage === 'doctorProfile' && selectedDoctor && (
+              <View style={styles.card}>
+                <Text style={styles.name}>{selectedDoctor.name}</Text>
+                <Text style={styles.badge}>Verified clinician • GMC registered • Insured</Text>
+                <Text style={styles.meta}>Available: {selectedDoctor.availabilityLabel}</Text>
+                <Text style={styles.meta}>Appointment types: Clinic, Video, Home visit</Text>
+                <Text style={styles.meta}>Deposit now: {selectedDoctor.deposit}%</Text>
+                <Text style={styles.meta}>Remainder after appointment</Text>
+                <Text style={styles.meta}>Cancellation cutoff: 2h before appointment</Text>
+                <Text style={styles.meta}>Not for emergencies. Urgent symptoms -> NHS 111 / 999.</Text>
+                <View style={styles.rowGap}>
+                  <SmallButton label="Back" onPress={() => setHomeStage('home')} />
+                  <SmallButton label="Book now" primary onPress={() => setHomeStage('booking1')} />
                 </View>
-              ))}
-            </ScrollView>
+              </View>
+            )}
+
+            {homeStage === 'booking1' && (
+              <View style={styles.card}>
+                <Text style={styles.name}>Step 1 of 4</Text>
+                <Text style={styles.meta}>Confirm appointment type + time</Text>
+                <View style={styles.rowGap}>
+                  {(['Clinic', 'Video', 'Home visit'] as VisitType[]).map((v) => (
+                    <SmallButton key={v} label={v} primary={appointmentType === v} onPress={() => setAppointmentType(v)} />
+                  ))}
+                </View>
+                <View style={styles.rowGap}>
+                  <SmallButton label="Back" onPress={() => setHomeStage('home')} />
+                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking2')} />
+                </View>
+              </View>
+            )}
+
+            {homeStage === 'booking2' && (
+              <View style={styles.card}>
+                <Text style={styles.name}>Step 2 of 4</Text>
+                <Text style={styles.meta}>Reason for visit + safety screening</Text>
+                <View style={styles.rowGap}>
+                  {(['Ear pain', 'Fever', 'Skin issue', 'Other'] as const).map((r) => (
+                    <SmallButton key={r} label={r} primary={reason === r} onPress={() => setReason(r)} />
+                  ))}
+                </View>
+                <View style={styles.rowGap}>
+                  <SmallButton label="No red flags" primary={triageSafe} onPress={() => setTriageSafe(true)} />
+                  <SmallButton label="Red flags" primary={!triageSafe} onPress={() => setTriageSafe(false)} />
+                </View>
+                {!triageSafe && <Text style={styles.alert}>This may need urgent care guidance before booking.</Text>}
+                <View style={styles.rowGap}>
+                  <SmallButton label="Back" onPress={() => setHomeStage('booking1')} />
+                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking3')} />
+                </View>
+              </View>
+            )}
+
+            {homeStage === 'booking3' && (
+              <View style={styles.card}>
+                <Text style={styles.name}>Step 3 of 4</Text>
+                <Text style={styles.meta}>Location + accessibility notes</Text>
+                <Text style={styles.meta}>Using your current location for this alpha.</Text>
+                <View style={styles.rowGap}>
+                  <SmallButton label="Back" onPress={() => setHomeStage('booking2')} />
+                  <SmallButton label="Next" primary onPress={() => setHomeStage('booking4')} />
+                </View>
+              </View>
+            )}
+
+            {homeStage === 'booking4' && selectedDoctor && (
+              <View style={styles.card}>
+                <Text style={styles.name}>Step 4 of 4</Text>
+                <Text style={styles.meta}>Deposit today: £{Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100)}</Text>
+                <Text style={styles.meta}>Remainder after appointment</Text>
+                <Text style={styles.meta}>Cancellation terms shown before payment</Text>
+                <View style={styles.rowGap}>
+                  <SmallButton label="Back" onPress={() => setHomeStage('booking3')} />
+                  <SmallButton label="Pay deposit" primary onPress={() => setHomeStage('bookingConfirmed')} />
+                </View>
+              </View>
+            )}
+
+            {homeStage === 'bookingConfirmed' && selectedDoctor && (
+              <View style={styles.card}>
+                <Text style={styles.name}>Booking confirmed</Text>
+                <Text style={styles.meta}>What happens next:</Text>
+                <Text style={styles.meta}>• Appointment confirmed</Text>
+                <Text style={styles.meta}>• Status updates: confirmed -> starting soon</Text>
+                <Text style={styles.meta}>• Messaging is enabled with safety guidelines</Text>
+                <Text style={styles.meta}>• Pricing + cancellation terms were shown before payment</Text>
+                <View style={styles.rowGap}>
+                  <SmallButton label="Done" primary onPress={() => setHomeStage('home')} />
+                </View>
+              </View>
+            )}
           </View>
 
 
@@ -292,6 +394,7 @@ const styles = StyleSheet.create({
   price: { fontSize: 16, fontWeight: '700', color: '#1D4ED8' },
   badge: { color: '#0F172A', fontWeight: '600', marginTop: 4 },
   meta: { color: '#475569', marginTop: 2 },
+  alert: { color: '#B45309', marginTop: 6, fontWeight: '600' },
   smallBtn: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: '#EEF2FF' },
   smallBtnPrimary: { backgroundColor: '#1D4ED8' },
   smallBtnText: { color: '#0F172A', fontWeight: '700' },
