@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   priceBubble: { backgroundColor: '#0F172A', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, marginBottom: 4 },
   priceBubbleText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   stethPin: { width: 26, height: 26, borderRadius: 999, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center' },
-  listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 72 },
+  listWrap: { flex: 1, paddingHorizontal: 4, paddingTop: 8, paddingBottom: 62 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
