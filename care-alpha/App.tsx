@@ -400,10 +400,10 @@ export default function App() {
             <View style={styles.profileAvatar}>
               <Ionicons name="camera-outline" size={22} color="#64748B" />
             </View>
-            <Text style={styles.placeholderTitle}>Patient profile</Text>
-            <Text style={styles.meta}>Name: Silas</Text>
+            <Text style={styles.profileTitle}>Patient profile</Text>
+            <Text style={styles.profileFieldCentered}>Name: Silas</Text>
             <Text style={styles.meta}>Email: silas@example.com</Text>
-            <Text style={styles.meta}>Phone: +44...</Text>
+            <Text style={styles.profileFieldCentered}>Phone: +44...</Text>
             <View style={styles.rowGap}>
               <SmallButton label="Settings" />
               <SmallButton label="Help" />
@@ -607,6 +607,8 @@ const styles = StyleSheet.create({
   placeholder: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 12, paddingBottom: 80, width: '100%' },
   placeholderTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A' },
   placeholderText: { marginTop: 6, color: '#64748B' },
+  profileTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
+  profileFieldCentered: { color: '#475569', marginTop: 2, textAlign: 'center' },
   profileAvatar: {
     width: 76,
     height: 76,
