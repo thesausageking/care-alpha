@@ -209,7 +209,14 @@ export default function App() {
             onRegionChangeComplete={setMapRegion}
           >
             {doctors.map((d) => (
-              <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelectedDoctorId(d.id)}>
+              <Marker
+                key={d.id}
+                coordinate={{ latitude: d.lat, longitude: d.lng }}
+                onPress={() => {
+                  setSelectedDoctorId(d.id);
+                  setHomeStage('doctorProfile');
+                }}
+              >
                 <View style={[styles.marker, selectedDoctorId === d.id && styles.markerActive]}>
                   <View style={styles.priceBubble}>
                     <Text style={styles.priceBubbleText}>£{d.priceFrom}</Text>
