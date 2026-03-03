@@ -265,15 +265,7 @@ export default function App() {
                   onChangeText={setReasonText}
                   multiline
                 />
-                <TextInput
-                  style={styles.reasonInput}
-                  placeholder="Any urgent warning symptoms? (yes/no + details)"
-                  placeholderTextColor="#94A3B8"
-                  value={triageSafe ? '' : 'Red flags noted'}
-                  onChangeText={(t) => setTriageSafe(!t.toLowerCase().includes('yes') && !t.toLowerCase().includes('red'))}
-                  multiline
-                />
-                {!triageSafe && <Text style={styles.alert}>Urgent symptoms detected. Show urgent care guidance before booking.</Text>}
+
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking1')} />
                   <NextButton onPress={() => setHomeStage('booking3')} />
