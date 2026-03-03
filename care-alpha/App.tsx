@@ -197,11 +197,13 @@ export default function App() {
                 <CircleIcon name="locate" onPress={recenterToUser} />
               </View>
             </View>
-            <Text style={styles.brand}>Care</Text>
+            <Text style={styles.brand}>Care.</Text>
             {!!status && <Text style={styles.status}>{status}</Text>}
 
             <TouchableOpacity style={styles.timeBtn} onPress={() => setShowTimeMenu((v) => !v)}>
-              <Text style={styles.timeBtnText}>Time {selectedTime} ▾</Text>
+              <Ionicons name="time-outline" size={14} color="#0F172A" />
+              <Text style={styles.timeBtnText}>{selectedTime === 'Now' ? 'Now' : selectedTime}</Text>
+              <Ionicons name="chevron-down" size={14} color="#0F172A" />
             </TouchableOpacity>
 
             {showTimeMenu && (
@@ -278,15 +280,29 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
   floatingTop: { position: 'absolute', top: 10, left: 12, right: 12 },
-  iconRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' },
+  iconRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, alignItems: 'center' },
   iconRowRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' },
   miniBtn: { backgroundColor: 'white', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 },
   miniBtnText: { color: '#0F172A', fontWeight: '700', fontSize: 12 },
-  brand: { fontSize: 36, lineHeight: 38, fontWeight: '300', color: '#0F172A', fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined },
+  brand: { fontSize: 38, lineHeight: 40, marginLeft: 2, fontWeight: '300', color: '#0F172A', fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined },
   status: { fontSize: 11, color: '#475569' },
-  timeBtn: { marginTop: 8, alignSelf: 'flex-start', backgroundColor: 'white', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  timeBtnText: { fontWeight: '700', color: '#0F172A' },
+  timeBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    backgroundColor: 'white',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  timeBtnText: { fontWeight: '700', color: '#0F172A', minWidth: 42, textAlign: 'center' },
   menu: { marginTop: 6, maxHeight: 190, backgroundColor: 'white', borderRadius: 12, overflow: 'hidden' },
   menuItem: { paddingHorizontal: 12, paddingVertical: 8 },
   menuText: { color: '#334155' },
