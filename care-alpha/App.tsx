@@ -50,7 +50,7 @@ export default function App() {
   const [selectedTime, setSelectedTime] = useState('Now');
   const [showTimeMenu, setShowTimeMenu] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [screen, setScreen] = useState<'map' | 'confirmed'>('map');
+  const [screen, setScreen] = useState<'auth' | 'map' | 'confirmed'>('auth');
   const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
@@ -176,6 +176,22 @@ export default function App() {
     <SafeAreaView style={styles.safe}>
       <StatusBar style="dark" />
 
+      {screen === 'auth' && (
+        <View style={styles.authWrap}>
+          <Text style={styles.brandAuth}>Care.</Text>
+          <Text style={styles.authSub}>Private GP appointments in minutes</Text>
+          <TouchableOpacity style={styles.authBtnPrimary} onPress={() => setScreen('map')}>
+            <Text style={styles.authBtnPrimaryText}>Continue with Apple</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.authBtn} onPress={() => setScreen('map')}>
+            <Text style={styles.authBtnText}>Continue with Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.authBtn} onPress={() => setScreen('map')}>
+            <Text style={styles.authBtnText}>Create account with email</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {screen === 'map' && (
         <View style={styles.container}>
           <MapView ref={mapRef} style={styles.map} region={region} showsUserLocation showsMyLocationButton>
@@ -200,11 +216,18 @@ export default function App() {
             <Text style={styles.brand}>Care.</Text>
             {!!status && <Text style={styles.status}>{status}</Text>}
 
-            <TouchableOpacity style={styles.timeBtn} onPress={() => setShowTimeMenu((v) => !v)}>
-              <Ionicons name="time-outline" size={14} color="#0F172A" />
-              <Text style={styles.timeBtnText}>{selectedTime === 'Now' ? 'Now' : selectedTime}</Text>
-              <Ionicons name="chevron-down" size={14} color="#0F172A" />
-            </TouchableOpacity>
+
+          </View>
+
+          <View style={styles.sheet}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.sheetTitle}>Choose appointment</Text>
+              <TouchableOpacity style={styles.timeBtn} onPress={() => setShowTimeMenu((v) => !v)}>
+                <Ionicons name="time-outline" size={14} color="#0F172A" />
+                <Text style={styles.timeBtnText}>{selectedTime === 'Now' ? 'Now' : selectedTime}</Text>
+                <Ionicons name="chevron-down" size={14} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
 
             {showTimeMenu && (
               <View style={styles.menu}>
@@ -215,10 +238,6 @@ export default function App() {
                 ))}
               </View>
             )}
-          </View>
-
-          <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Choose appointment</Text>
             {selectedDoctor ? (
               <>
                 <View style={styles.docCard}>
@@ -244,6 +263,7 @@ export default function App() {
           <Text style={styles.confirmText}>{selectedDoctor.name}</Text>
           <Text style={styles.confirmText}>{selectedTime} • {selectedDoctor.address}</Text>
           <Text style={styles.confirmText}>Arrive 5 mins early. Bring photo ID.</Text>
+          <Text style={styles.confirmText}>Confirmation sent to your email with directions and instructions.</Text>
           <TouchableOpacity style={styles.cta} onPress={() => setScreen('map')}><Text style={styles.ctaText}>Back to map</Text></TouchableOpacity>
         </View>
       )}
@@ -277,6 +297,13 @@ function buildTimeOptions(start: string, end: string, step: number) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
+  authWrap: { flex: 1, padding: 24, justifyContent: 'center', gap: 12, backgroundColor: '#F8FAFC' },
+  brandAuth: { fontSize: 52, fontWeight: '300', color: '#0F172A', marginBottom: 4, fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined },
+  authSub: { color: '#475569', marginBottom: 12 },
+  authBtnPrimary: { backgroundColor: '#0F172A', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  authBtnPrimaryText: { color: 'white', fontWeight: '700' },
+  authBtn: { backgroundColor: 'white', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  authBtnText: { color: '#0F172A', fontWeight: '700' },
   container: { flex: 1 },
   map: { flex: 1 },
   floatingTop: { position: 'absolute', top: 20, left: 12, right: 12 },
@@ -288,19 +315,13 @@ const styles = StyleSheet.create({
   brand: { fontSize: 38, lineHeight: 40, marginLeft: 2, fontWeight: '300', color: '#0F172A', fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined },
   status: { fontSize: 11, color: '#475569' },
   timeBtn: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC',
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
   },
   timeBtnText: { fontWeight: '700', color: '#0F172A', minWidth: 42, textAlign: 'center' },
   menu: { marginTop: 6, maxHeight: 190, backgroundColor: 'white', borderRadius: 12, overflow: 'hidden' },
