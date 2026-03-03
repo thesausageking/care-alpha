@@ -402,9 +402,9 @@ export default function App() {
             </View>
             <Text style={styles.profileTitle}>Patient profile</Text>
             <Text style={styles.profileFieldCentered}>Name: Silas</Text>
-            <Text style={styles.meta}>Email: silas@example.com</Text>
+            <Text style={styles.profileFieldCentered}>Email: silas@example.com</Text>
             <Text style={styles.profileFieldCentered}>Phone: +44...</Text>
-            <View style={styles.rowGap}>
+            <View style={styles.profileStack}>
               <SmallButton label="Settings" />
               <SmallButton label="Help" />
               <SmallButton label="Stats" />
@@ -609,6 +609,7 @@ const styles = StyleSheet.create({
   placeholderText: { marginTop: 6, color: '#64748B' },
   profileTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
   profileFieldCentered: { color: '#475569', marginTop: 2, textAlign: 'center' },
+  profileStack: { marginTop: 8, gap: 8, alignItems: 'center' },
   profileAvatar: {
     width: 76,
     height: 76,
