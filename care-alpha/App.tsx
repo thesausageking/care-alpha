@@ -155,10 +155,10 @@ export default function App() {
       {showIntro ? (
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -10 }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -10 }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -10 }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -10 }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -10 }, { rotate: introStep >= 1 ? '0deg' : '-10deg' }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -10 }, { rotate: introStep >= 2 ? '0deg' : '8deg' }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -10 }, { rotate: introStep >= 3 ? '0deg' : '-7deg' }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -10 }, { rotate: introStep >= 4 ? '0deg' : '9deg' }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
             <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
           </View>
         </View>
