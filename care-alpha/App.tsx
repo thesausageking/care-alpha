@@ -190,8 +190,13 @@ export default function App() {
           <MapView style={styles.map} initialRegion={LONDON_REGION}>
             {doctors.map((d) => (
               <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelectedDoctorId(d.id)}>
-                <View style={[styles.marker, markerColor(d.availability), selectedDoctorId === d.id && styles.markerActive]}>
-                  <Text style={styles.markerText}>£{d.priceFrom} • {d.etaMin}m</Text>
+                <View style={[styles.marker, selectedDoctorId === d.id && styles.markerActive]}>
+                  <View style={styles.priceBubble}>
+                    <Text style={styles.priceBubbleText}>£{d.priceFrom}</Text>
+                  </View>
+                  <View style={styles.stethPin}>
+                    <Ionicons name="medical" size={12} color="#fff" />
+                  </View>
                 </View>
               </Marker>
             ))}
@@ -332,12 +337,6 @@ export default function App() {
   );
 }
 
-function markerColor(a: Availability) {
-  if (a === 'available') return { backgroundColor: '#10B981' };
-  if (a === 'limited') return { backgroundColor: '#F59E0B' };
-  if (a === 'unavailable') return { backgroundColor: '#EF4444' };
-  return { backgroundColor: '#94A3B8' };
-}
 
 function FilterChip({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
   return (
@@ -420,9 +419,11 @@ const styles = StyleSheet.create({
   dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 6 },
   filterMeta: { marginTop: 8, color: '#0F172A', fontSize: 12, fontWeight: '600' },
   map: { height: 230, marginHorizontal: 16, borderRadius: 16 },
-  marker: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 6 },
-  markerActive: { borderWidth: 2, borderColor: '#0F172A' },
-  markerText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  marker: { alignItems: 'center' },
+  markerActive: { transform: [{ scale: 1.03 }] },
+  priceBubble: { backgroundColor: '#0F172A', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, marginBottom: 4 },
+  priceBubbleText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  stethPin: { width: 26, height: 26, borderRadius: 999, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center' },
   listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 72 },
   card: {
     backgroundColor: '#fff',
