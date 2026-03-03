@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import { supabase } from './lib.supabase';
 
@@ -82,7 +82,11 @@ export default function App() {
       const data = await res.json();
       if (!data?.url) throw new Error('Missing checkout URL');
 
-      await Linking.openURL(data.url);
+      if (Platform.OS === 'web') {
+        (globalThis as any).location.href = data.url;
+      } else {
+        await Linking.openURL(data.url);
+      }
       setStatus('Complete payment in Stripe, then return to app');
     } catch (e: any) {
       setStatus(`Payment error: ${e.message}`);
