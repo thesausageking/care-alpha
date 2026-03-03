@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Linking from 'expo-linking';
 import { supabase } from './lib.supabase';
 
 type Doctor = { id: string; name: string; price: number; rating: number; nextSlot: string };
@@ -11,6 +12,7 @@ export default function App() {
   const [screen, setScreen] = useState<'welcome' | 'list' | 'profile' | 'booking' | 'confirmed'>('welcome');
   const [status, setStatus] = useState('Connecting...');
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   const deposit = useMemo(() => Number(((selectedDoctor?.price ?? 0) * 0.15).toFixed(2)), [selectedDoctor]);
 
@@ -53,7 +55,43 @@ export default function App() {
     })();
   }, []);
 
-  const confirmBooking = async () => {
+  const startPayment = async () => {
+    if (!selectedDoctor || !patientId) return;
+
+    const paymentsApi = process.env.EXPO_PUBLIC_PAYMENTS_API_URL;
+    if (!paymentsApi) {
+      setStatus('Missing EXPO_PUBLIC_PAYMENTS_API_URL');
+      return;
+    }
+
+    try {
+      setIsPaying(true);
+      const res = await fetch(`${paymentsApi}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId,
+          doctorId: selectedDoctor.id,
+          doctorName: selectedDoctor.name,
+          consultationPriceGbp: selectedDoctor.price,
+          depositGbp: deposit,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Payment API failed: ${res.status}`);
+      const data = await res.json();
+      if (!data?.url) throw new Error('Missing checkout URL');
+
+      await Linking.openURL(data.url);
+      setStatus('Complete payment in Stripe, then return to app');
+    } catch (e: any) {
+      setStatus(`Payment error: ${e.message}`);
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const markPaidAndCreateBooking = async () => {
     if (!selectedDoctor || !patientId) return;
     try {
       await supabase.from('bookings').insert({
@@ -63,8 +101,8 @@ export default function App() {
         deposit_gbp: deposit,
       });
       setScreen('confirmed');
-    } catch {
-      setScreen('confirmed');
+    } catch (e: any) {
+      setStatus(`Booking write failed: ${e.message}`);
     }
   };
 
@@ -121,7 +159,8 @@ export default function App() {
             <Small>Consultation: £{selectedDoctor.price}</Small>
             <Small>Deposit now (15%): £{deposit}</Small>
             <Small>Emergency symptoms? Call 999.</Small>
-            <Btn label="Pay deposit (mock)" onPress={confirmBooking} />
+            <Btn label={isPaying ? 'Opening Stripe...' : 'Pay deposit (Stripe Checkout)'} onPress={startPayment} />
+            <Btn label="I paid, confirm booking" onPress={markPaidAndCreateBooking} />
           </Card>
         )}
 

@@ -22,12 +22,21 @@ npm run ios
 3. Booking insert on confirm (deposit + price) ✅
 4. Stripe payment is still mocked in-app (next step)
 
+## Stripe checkout wiring (now implemented)
+The app now calls `EXPO_PUBLIC_PAYMENTS_API_URL/create-checkout-session` and opens Stripe Checkout.
+
+Deploy function:
+```bash
+cd care-alpha
+supabase functions deploy create-checkout-session --no-verify-jwt
+supabase secrets set STRIPE_SECRET_KEY=sk_test_...
+```
+
 ## Next integrations (in order)
-1. Real Stripe PaymentSheet + backend intent endpoint
+1. Stripe webhook to auto-create booking on successful payment
 2. Doctor onboarding + GMC verification workflow
 3. Slot search by distance + time
-4. Webhooks for payment/booking status
-5. Reviews + support flow
+4. Reviews + support flow
 
 ## Required keys
 Copy `.env.example` to `.env` and fill values:
