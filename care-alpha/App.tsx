@@ -111,14 +111,8 @@ export default function App() {
   const [reasonText, setReasonText] = useState('');
   const [bookingStatus, setBookingStatus] = useState<'confirmed' | 'starting_soon' | 'completed'>('confirmed');
   const [reviewStars, setReviewStars] = useState(0);
-
-  // M4 provider-side
-  const [providerOnline, setProviderOnline] = useState(false);
-  const [providerRadius, setProviderRadius] = useState(5);
-  const [providerNotice, setProviderNotice] = useState(30);
-  const [providerVisitType, setProviderVisitType] = useState<VisitType>('Clinic');
-  const [providerOnboardingDone, setProviderOnboardingDone] = useState(false);
-  const [providerOutcome, setProviderOutcome] = useState('');
+  const [activeChatDoctor, setActiveChatDoctor] = useState<string | null>(null);
+  const [chatDraft, setChatDraft] = useState('');
 
   const doctors = useMemo(
     () =>
@@ -206,7 +200,7 @@ export default function App() {
               </View>
             )}
 
-            <Text style={styles.filterMeta}>Only verified + insured</Text>
+
           </View>
 
           <MapView
@@ -321,7 +315,12 @@ export default function App() {
                 <Text style={styles.meta}>Cancellation terms shown before payment</Text>
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking2')} />
-                  <NextButton label="Pay deposit" onPress={() => { setHomeStage('bookingConfirmed'); setTab('bookings'); setBookingStatus('confirmed'); }} />
+                  <NextButton label="Pay deposit" onPress={() => {
+                    setHomeStage('bookingConfirmed');
+                    setBookingStatus('confirmed');
+                    setActiveChatDoctor(selectedDoctor?.name ?? null);
+                    setTab('messages');
+                  }} />
                 </View>
               </View>
             )}
@@ -371,67 +370,39 @@ export default function App() {
         <View style={styles.placeholder}>
           <View style={styles.card}>
             <Text style={styles.placeholderTitle}>Messages</Text>
-            <Text style={styles.meta}>Clinician-safe chat enabled.</Text>
-            <Text style={styles.meta}>No personal phone numbers or contact details allowed.</Text>
-            <Text style={styles.meta}>Photo upload with consent prompt (M3 placeholder).</Text>
-            <Text style={styles.meta}>Report an issue is always available.</Text>
+            <Text style={styles.meta}>{activeChatDoctor ? `Chat with ${activeChatDoctor}` : 'No active chats yet'}</Text>
+            <View style={[styles.reasonInput, { minHeight: 120 }]}> 
+              <Text style={styles.meta}>You: Hi, I’ve booked for later today.</Text>
+              <Text style={styles.meta}>Doctor: Thanks, please share any additional details here.</Text>
+            </View>
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Type a message"
+              placeholderTextColor="#94A3B8"
+              value={chatDraft}
+              onChangeText={setChatDraft}
+            />
+            <View style={styles.rowGap}>
+              <SmallButton label="Send" primary onPress={() => setChatDraft('')} />
+            </View>
           </View>
         </View>
       ) : (
         <View style={styles.placeholder}>
-          <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 80 }}>
-            <View style={styles.card}>
-              <Text style={styles.placeholderTitle}>Doctor onboarding</Text>
-              <Text style={styles.meta}>Identity verification</Text>
-              <Text style={styles.meta}>GMC license verification</Text>
-              <Text style={styles.meta}>Insurance verification</Text>
-              <Text style={styles.meta}>Bank payout setup</Text>
-              <View style={styles.rowGap}>
-                <NextButton label={providerOnboardingDone ? 'Onboarding complete' : 'Complete onboarding'} onPress={() => setProviderOnboardingDone(true)} />
-              </View>
+          <View style={[styles.card, { width: '100%' }]}>
+            <View style={styles.profileAvatar}>
+              <Ionicons name="camera-outline" size={22} color="#64748B" />
             </View>
-
-            <View style={styles.card}>
-              <Text style={styles.placeholderTitle}>Go online settings</Text>
-              <Text style={styles.meta}>Status: {providerOnline ? 'Online' : 'Offline'}</Text>
-              <Text style={styles.meta}>Radius: {providerRadius}km</Text>
-              <Text style={styles.meta}>Min notice: {providerNotice} min</Text>
-              <Text style={styles.meta}>Appointment type: {providerVisitType}</Text>
-              <View style={styles.rowGap}>
-                <SmallButton label={providerOnline ? 'Go offline' : 'Go online'} primary onPress={() => setProviderOnline(!providerOnline)} />
-                <SmallButton label={`${providerRadius}km`} onPress={() => setProviderRadius(providerRadius === 5 ? 10 : 5)} />
-                <SmallButton label={`${providerNotice}m`} onPress={() => setProviderNotice(providerNotice === 30 ? 60 : 30)} />
-                <SmallButton label={providerVisitType} onPress={() => setProviderVisitType(providerVisitType === 'Clinic' ? 'Video' : providerVisitType === 'Video' ? 'Home visit' : 'Clinic')} />
-              </View>
+            <Text style={styles.placeholderTitle}>Patient profile</Text>
+            <Text style={styles.meta}>Name: Silas</Text>
+            <Text style={styles.meta}>Email: silas@example.com</Text>
+            <Text style={styles.meta}>Phone: +44...</Text>
+            <View style={styles.rowGap}>
+              <SmallButton label="Settings" />
+              <SmallButton label="Help" />
+              <SmallButton label="Stats" />
             </View>
-
-            <View style={styles.card}>
-              <Text style={styles.placeholderTitle}>Provider workflow</Text>
-              <Text style={styles.meta}>Booking request: Ear pain, today 12:40</Text>
-              <Text style={styles.meta}>Patient context + pre-screen available</Text>
-              <Text style={styles.meta}>Outcome notes</Text>
-              <TextInput
-                style={styles.reasonInput}
-                placeholder="Add consultation notes/outcome"
-                placeholderTextColor="#94A3B8"
-                value={providerOutcome}
-                onChangeText={setProviderOutcome}
-                multiline
-              />
-              <View style={styles.rowGap}>
-                <SmallButton label="Save notes" onPress={() => {}} />
-                <SmallButton label="Create invoice" onPress={() => {}} />
-                <SmallButton label="Follow-up" onPress={() => {}} />
-              </View>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.placeholderTitle}>Payouts & ratings</Text>
-              <Text style={styles.meta}>Pending payout: £245</Text>
-              <Text style={styles.meta}>Next payout: Tomorrow 09:00</Text>
-              <Text style={styles.meta}>Provider rating: 4.9 • 212 reviews</Text>
-            </View>
-          </ScrollView>
+          </View>
         </View>
       )}
 
@@ -614,4 +585,16 @@ const styles = StyleSheet.create({
   placeholder: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 12, paddingBottom: 80, width: '100%' },
   placeholderTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A' },
   placeholderText: { marginTop: 6, color: '#64748B' },
+  profileAvatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    alignSelf: 'center',
+    backgroundColor: '#F8FAFC',
+  },
 });
