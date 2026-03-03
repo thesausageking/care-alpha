@@ -9,6 +9,9 @@ import {
   View,
 } from 'react-native';
 import * as Linking from 'expo-linking';
+import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { Picker } from '@react-native-picker/picker';
 import { supabase } from './lib.supabase';
 
 type Doctor = {
@@ -16,29 +19,67 @@ type Doctor = {
   name: string;
   price: number;
   rating: number;
-  type: 'GP' | 'ENT' | 'Dermatology';
-  etaMin: number;
   nextSlot: string;
   address: string;
+  lat: number;
+  lng: number;
+  availableTimes: string[];
 };
 
-const MOCK_DOCTORS: Doctor[] = [
-  { id: 'd1', name: 'Dr Khan', price: 65, rating: 4.8, type: 'GP', etaMin: 6, nextSlot: '12:15', address: 'Liverpool Street Clinic' },
-  { id: 'd2', name: 'Dr Patel', price: 55, rating: 4.7, type: 'ENT', etaMin: 9, nextSlot: '12:40', address: 'Bank Medical Centre' },
-  { id: 'd3', name: 'Dr Williams', price: 75, rating: 4.9, type: 'Dermatology', etaMin: 11, nextSlot: '13:00', address: 'Moorgate Private Practice' },
-  { id: 'd4', name: 'Dr Chen', price: 60, rating: 4.6, type: 'GP', etaMin: 8, nextSlot: '13:15', address: 'City Clinic EC2' },
-  { id: 'd5', name: 'Dr Ali', price: 70, rating: 4.9, type: 'ENT', etaMin: 5, nextSlot: '13:30', address: 'Aldgate Health Rooms' },
+const DEFAULT_REGION: Region = {
+  latitude: 51.515,
+  longitude: -0.09,
+  latitudeDelta: 0.06,
+  longitudeDelta: 0.06,
+};
+
+const GP_DOCTORS: Doctor[] = [
+  {
+    id: 'd1',
+    name: 'Dr Khan',
+    price: 65,
+    rating: 4.8,
+    nextSlot: '12:15',
+    address: 'Liverpool Street Clinic',
+    lat: 51.5176,
+    lng: -0.0826,
+    availableTimes: ['10:00', '11:30', '12:15', '13:00', '14:15', '16:30'],
+  },
+  {
+    id: 'd2',
+    name: 'Dr Chen',
+    price: 60,
+    rating: 4.7,
+    nextSlot: '12:30',
+    address: 'Bank Medical Centre',
+    lat: 51.5139,
+    lng: -0.089,
+    availableTimes: ['09:15', '10:45', '12:30', '13:30', '15:00', '17:45'],
+  },
+  {
+    id: 'd3',
+    name: 'Dr Ahmed',
+    price: 70,
+    rating: 4.9,
+    nextSlot: '13:00',
+    address: 'Moorgate Private Practice',
+    lat: 51.5187,
+    lng: -0.0886,
+    availableTimes: ['08:30', '10:00', '11:00', '13:00', '14:45', '18:00'],
+  },
 ];
+
+const TIME_OPTIONS = buildTimeOptions('08:00', '20:00', 15);
 
 export default function App() {
   const [patientId, setPatientId] = useState<string | null>(null);
   const [status, setStatus] = useState('Connecting...');
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedType, setSelectedType] = useState<'All' | 'GP' | 'ENT' | 'Dermatology'>('All');
-  const [selectedTime, setSelectedTime] = useState<'Now' | '12:30' | '13:00' | '13:30'>('Now');
+  const [doctors, setDoctors] = useState<Doctor[]>(GP_DOCTORS);
+  const [selectedTime, setSelectedTime] = useState('12:00');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [screen, setScreen] = useState<'map' | 'confirmed'>('map');
   const [isPaying, setIsPaying] = useState(false);
+  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
 
   useEffect(() => {
     (async () => {
@@ -63,28 +104,50 @@ export default function App() {
 
         if (error) throw error;
 
-        const mapped: Doctor[] = (data?.length ? data : MOCK_DOCTORS).map((d: any, i: number) => ({
-          id: d.id,
-          name: d.profiles?.full_name ?? d.name,
-          price: Number(d.price_gbp ?? d.price),
-          rating: Number(d.rating ?? 4.7),
-          type: (['GP', 'ENT', 'Dermatology'][i % 3] as Doctor['type']),
-          etaMin: [5, 7, 8, 10, 12][i % 5],
-          nextSlot: ['12:15', '12:40', '13:00', '13:15', '13:30'][i % 5],
-          address: d.clinic_address ?? d.address ?? 'City of London Clinic',
-        }));
+        if (data?.length) {
+          const mapped: Doctor[] = data.map((d: any, i: number) => ({
+            id: d.id,
+            name: d.profiles.full_name,
+            price: Number(d.price_gbp ?? 60),
+            rating: Number(d.rating ?? 4.7),
+            nextSlot: ['10:00', '11:30', '12:15', '13:00', '14:30'][i % 5],
+            address: d.clinic_address ?? 'City of London Clinic',
+            lat: 51.512 + i * 0.004,
+            lng: -0.095 + i * 0.004,
+            availableTimes: ['10:00', '11:30', '12:15', '13:00', '14:30', '16:00'],
+          }));
+          setDoctors(mapped);
+        }
 
-        setDoctors(mapped);
         setStatus('Live data connected ✅');
       } catch (e: any) {
-        setDoctors(MOCK_DOCTORS);
-        setStatus(`Using local doctor data (${e.message})`);
+        setDoctors(GP_DOCTORS);
+        setStatus(`Using GP demo data (${e.message})`);
       }
     })();
   }, []);
 
   useEffect(() => {
+    (async () => {
+      const { status: perm } = await Location.requestForegroundPermissionsAsync();
+      if (perm !== 'granted') {
+        setStatus((s) => `${s} • Location off`);
+        return;
+      }
+
+      const pos = await Location.getCurrentPositionAsync({});
+      setRegion({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        latitudeDelta: 0.04,
+        longitudeDelta: 0.04,
+      });
+    })();
+  }, []);
+
+  useEffect(() => {
     if (Platform.OS !== 'web') return;
+
     (async () => {
       const url = new URL((globalThis as any).location.href);
       const payment = url.searchParams.get('payment');
@@ -102,8 +165,8 @@ export default function App() {
           deposit_gbp: pending.depositGbp,
         });
 
-        const chosen = doctors.find((d) => d.id === pending.doctorId) ?? selectedDoctor;
-        setSelectedDoctor(chosen ?? null);
+        const chosen = doctors.find((d) => d.id === pending.doctorId) ?? null;
+        setSelectedDoctor(chosen);
         setScreen('confirmed');
         setStatus('Payment complete ✅ Booking confirmed');
       } catch (e: any) {
@@ -114,14 +177,12 @@ export default function App() {
         (globalThis as any).history.replaceState({}, '', url.toString());
       }
     })();
-  }, [doctors, selectedDoctor]);
+  }, [doctors]);
 
-  const filteredDoctors = useMemo(() => {
-    let list = doctors;
-    if (selectedType !== 'All') list = list.filter((d) => d.type === selectedType);
-    if (selectedTime !== 'Now') list = list.filter((d) => d.nextSlot <= selectedTime);
-    return list;
-  }, [doctors, selectedType, selectedTime]);
+  const filteredDoctors = useMemo(
+    () => doctors.filter((d) => d.availableTimes.includes(selectedTime)),
+    [doctors, selectedTime],
+  );
 
   const deposit = useMemo(() => {
     if (!selectedDoctor) return 0;
@@ -129,7 +190,7 @@ export default function App() {
   }, [selectedDoctor]);
 
   const startPayment = async () => {
-    if (!selectedDoctor) return setStatus('Select a doctor pin first');
+    if (!selectedDoctor) return setStatus('Tap a GP pin first');
     if (!patientId) return setStatus('Auth not ready yet');
 
     const api = process.env.EXPO_PUBLIC_PAYMENTS_API_URL;
@@ -137,15 +198,21 @@ export default function App() {
 
     try {
       setIsPaying(true);
-      const returnUrl = Platform.OS === 'web' ? `${(globalThis as any).location.origin}?payment=success` : 'care://payment-success';
+      const returnUrl =
+        Platform.OS === 'web'
+          ? `${(globalThis as any).location.origin}?payment=success`
+          : 'care://payment-success';
 
       if (Platform.OS === 'web') {
-        (globalThis as any).localStorage?.setItem('care_pending_booking', JSON.stringify({
-          patientId,
-          doctorId: selectedDoctor.id,
-          consultationPriceGbp: selectedDoctor.price,
-          depositGbp: deposit,
-        }));
+        (globalThis as any).localStorage?.setItem(
+          'care_pending_booking',
+          JSON.stringify({
+            patientId,
+            doctorId: selectedDoctor.id,
+            consultationPriceGbp: selectedDoctor.price,
+            depositGbp: deposit,
+          }),
+        );
       }
 
       const res = await fetch(`${api}/create-checkout-session`, {
@@ -163,7 +230,7 @@ export default function App() {
 
       if (!res.ok) throw new Error(`Payment API failed ${res.status}`);
       const data = await res.json();
-      if (!data?.url) throw new Error('No checkout url');
+      if (!data?.url) throw new Error('No checkout URL');
 
       if (Platform.OS === 'web') {
         (globalThis as any).location.href = data.url;
@@ -182,52 +249,58 @@ export default function App() {
       <StatusBar style="light" />
 
       {screen === 'map' && (
-        <View style={styles.mapScreen}>
+        <View style={styles.container}>
+          <MapView
+            style={styles.map}
+            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            initialRegion={region}
+            region={region}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {filteredDoctors.map((d) => (
+              <Marker
+                key={d.id}
+                coordinate={{ latitude: d.lat, longitude: d.lng }}
+                onPress={() => setSelectedDoctor(d)}
+              >
+                <View style={[styles.pin, selectedDoctor?.id === d.id && styles.pinActive]}>
+                  <Text style={styles.pinText}>£{d.price}</Text>
+                </View>
+              </Marker>
+            ))}
+          </MapView>
+
           <View style={styles.topOverlay}>
             <Text style={styles.logo}>Care</Text>
-            <Text style={styles.subStatus}>{status}</Text>
+            <Text style={styles.status}>{status}</Text>
+            <Text style={styles.gpOnly}>GP only</Text>
 
-            <View style={styles.filterRow}>
-              <FilterPill label={selectedType} onPress={() => cycleType(setSelectedType)} />
-              <FilterPill label={`Time: ${selectedTime}`} onPress={() => cycleTime(setSelectedTime)} />
+            <View style={styles.wheelWrap}>
+              <Text style={styles.wheelLabel}>Time</Text>
+              <Picker selectedValue={selectedTime} onValueChange={(v) => setSelectedTime(v)} style={styles.wheel}>
+                {TIME_OPTIONS.map((t) => (
+                  <Picker.Item key={t} label={t} value={t} />
+                ))}
+              </Picker>
             </View>
-          </View>
-
-          <View style={styles.mapArea}>
-            <View style={styles.userDot} />
-            {filteredDoctors.map((d, i) => {
-              const active = selectedDoctor?.id === d.id;
-              return (
-                <TouchableOpacity
-                  key={d.id}
-                  style={[
-                    styles.pin,
-                    { left: `${12 + ((i * 19) % 75)}%`, top: `${16 + ((i * 17) % 68)}%` },
-                    active && styles.pinActive,
-                  ]}
-                  onPress={() => setSelectedDoctor(d)}
-                >
-                  <Text style={styles.pinText}>£{d.price}</Text>
-                </TouchableOpacity>
-              );
-            })}
           </View>
 
           {selectedDoctor ? (
             <View style={styles.bottomSheet}>
               <View style={styles.rowBetween}>
-                <Text style={styles.docName}>{selectedDoctor.name}</Text>
+                <Text style={styles.name}>{selectedDoctor.name}</Text>
                 <Text style={styles.price}>£{selectedDoctor.price}</Text>
               </View>
-              <Text style={styles.meta}>★ {selectedDoctor.rating} • {selectedDoctor.type} • {selectedDoctor.etaMin} min away</Text>
-              <Text style={styles.meta}>{selectedDoctor.address} • Next {selectedDoctor.nextSlot}</Text>
+              <Text style={styles.meta}>★ {selectedDoctor.rating} • GP • Next {selectedDoctor.nextSlot}</Text>
+              <Text style={styles.meta}>{selectedDoctor.address}</Text>
               <TouchableOpacity style={styles.bookBtn} onPress={startPayment}>
                 <Text style={styles.bookBtnText}>{isPaying ? 'Opening Apple Pay…' : `Book now • Pay £${deposit} deposit`}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.bottomHint}>
-              <Text style={styles.meta}>Tap a doctor pin to book</Text>
+              <Text style={styles.meta}>Pick time, then tap a GP pin</Text>
             </View>
           )}
         </View>
@@ -237,9 +310,9 @@ export default function App() {
         <View style={styles.confirmScreen}>
           <Text style={styles.confirmTitle}>Booking Confirmed ✅</Text>
           <Text style={styles.confirmText}>{selectedDoctor.name}</Text>
-          <Text style={styles.confirmText}>{selectedDoctor.nextSlot} • {selectedDoctor.type}</Text>
+          <Text style={styles.confirmText}>{selectedTime} • GP appointment</Text>
           <Text style={styles.confirmText}>{selectedDoctor.address}</Text>
-          <Text style={styles.confirmText}>Bring photo ID. Arrive 5 minutes early.</Text>
+          <Text style={styles.confirmText}>Arrive 5 minutes early. Bring photo ID.</Text>
           <TouchableOpacity style={styles.bookBtn} onPress={() => setScreen('map')}>
             <Text style={styles.bookBtnText}>Back to map</Text>
           </TouchableOpacity>
@@ -249,71 +322,47 @@ export default function App() {
   );
 }
 
-function FilterPill({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.filterPill} onPress={onPress}>
-      <Text style={styles.filterText}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
+function buildTimeOptions(start: string, end: string, stepMin: number) {
+  const toMin = (s: string) => {
+    const [h, m] = s.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const fromMin = (m: number) => {
+    const h = Math.floor(m / 60).toString().padStart(2, '0');
+    const mm = (m % 60).toString().padStart(2, '0');
+    return `${h}:${mm}`;
+  };
 
-function cycleType(setter: (v: any) => void) {
-  setter((prev: string) => (prev === 'All' ? 'GP' : prev === 'GP' ? 'ENT' : prev === 'ENT' ? 'Dermatology' : 'All'));
-}
-
-function cycleTime(setter: (v: any) => void) {
-  setter((prev: string) => (prev === 'Now' ? '12:30' : prev === '12:30' ? '13:00' : prev === '13:00' ? '13:30' : 'Now'));
+  const out: string[] = [];
+  for (let t = toMin(start); t <= toMin(end); t += stepMin) out.push(fromMin(t));
+  return out;
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#0B1F3A' },
-  mapScreen: { flex: 1, backgroundColor: '#0B1F3A' },
+  container: { flex: 1 },
+  map: { flex: 1 },
   topOverlay: {
     position: 'absolute',
+    top: 6,
+    left: 10,
+    right: 10,
     zIndex: 20,
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 14,
-    paddingTop: 10,
+    backgroundColor: '#ffffffee',
+    borderRadius: 14,
+    padding: 10,
   },
-  logo: { color: 'white', fontSize: 28, fontWeight: '800' },
-  subStatus: { color: '#BFDBFE', fontSize: 11, marginTop: 2 },
-  filterRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  filterPill: {
-    backgroundColor: 'white',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  filterText: { color: '#0B1F3A', fontWeight: '700', fontSize: 12 },
-  mapArea: {
-    flex: 1,
-    backgroundColor: '#93C5FD',
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    marginTop: 86,
-    overflow: 'hidden',
-  },
-  userDot: {
-    position: 'absolute',
-    left: '50%',
-    top: '45%',
-    width: 16,
-    height: 16,
-    marginLeft: -8,
-    marginTop: -8,
-    borderRadius: 999,
-    backgroundColor: '#2563EB',
-    borderWidth: 3,
-    borderColor: 'white',
-  },
+  logo: { fontSize: 24, fontWeight: '800', color: '#0B1F3A' },
+  status: { fontSize: 11, color: '#334155' },
+  gpOnly: { fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginTop: 4 },
+  wheelWrap: { marginTop: 8 },
+  wheelLabel: { fontSize: 12, color: '#334155', fontWeight: '700' },
+  wheel: { height: 48, marginTop: -8 },
   pin: {
-    position: 'absolute',
     backgroundColor: '#0B1F3A',
-    borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    borderRadius: 999,
   },
   pinActive: { backgroundColor: '#1D4ED8' },
   pinText: { color: 'white', fontWeight: '800', fontSize: 12 },
@@ -339,7 +388,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  docName: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  name: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
   price: { fontSize: 18, fontWeight: '800', color: '#1D4ED8' },
   meta: { color: '#475569', fontSize: 13 },
   bookBtn: {
@@ -350,13 +399,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bookBtnText: { color: 'white', fontWeight: '800', fontSize: 14 },
-  confirmScreen: {
-    flex: 1,
-    backgroundColor: 'white',
-    padding: 20,
-    justifyContent: 'center',
-    gap: 8,
-  },
+  confirmScreen: { flex: 1, backgroundColor: 'white', padding: 20, justifyContent: 'center', gap: 8 },
   confirmTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
   confirmText: { color: '#334155', fontSize: 16 },
 });
