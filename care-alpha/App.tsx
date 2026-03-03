@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -95,6 +95,8 @@ const DOCTORS: Doctor[] = [
 ];
 
 export default function App() {
+  const mapRef = useRef<MapView | null>(null);
+  const [mapRegion, setMapRegion] = useState<Region>(LONDON_REGION);
   const [tab, setTab] = useState<Tab>('home');
   const [mode, setMode] = useState<CareMode>('ASAP');
   const [distanceKm, setDistanceKm] = useState(3);
@@ -122,6 +124,17 @@ export default function App() {
   );
 
   const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? doctors[0] ?? null;
+
+  const zoomBy = (factor: number) => {
+    const next: Region = {
+      ...mapRegion,
+      latitudeDelta: Math.max(0.005, Math.min(0.2, mapRegion.latitudeDelta * factor)),
+      longitudeDelta: Math.max(0.005, Math.min(0.2, mapRegion.longitudeDelta * factor)),
+    };
+    setMapRegion(next);
+    mapRef.current?.animateToRegion(next, 220);
+  };
+
   const bookingProgress =
     homeStage === 'booking1' ? 0.25 :
     homeStage === 'booking2' ? 0.5 :
@@ -138,6 +151,8 @@ export default function App() {
           <View style={styles.header}>
             <Text style={styles.brand}>Care.</Text>
             <View style={styles.headerIcons}>
+              <CircleIcon name="remove" onPress={() => zoomBy(1.25)} />
+              <CircleIcon name="add" onPress={() => zoomBy(0.8)} />
               <CircleIcon name="shield-checkmark-outline" />
               <CircleIcon name="person-circle-outline" />
             </View>
@@ -187,7 +202,12 @@ export default function App() {
             <Text style={styles.filterMeta}>Only verified + insured</Text>
           </View>
 
-          <MapView style={styles.map} initialRegion={LONDON_REGION}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            region={mapRegion}
+            onRegionChangeComplete={setMapRegion}
+          >
             {doctors.map((d) => (
               <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelectedDoctorId(d.id)}>
                 <View style={[styles.marker, selectedDoctorId === d.id && styles.markerActive]}>
@@ -384,11 +404,11 @@ function ProgressBar({ progress }: { progress: number }) {
   );
 }
 
-function CircleIcon({ name }: { name: keyof typeof Ionicons.glyphMap }) {
+function CircleIcon({ name, onPress }: { name: keyof typeof Ionicons.glyphMap; onPress?: () => void }) {
   return (
-    <View style={styles.circle}>
+    <TouchableOpacity style={styles.circle} onPress={onPress}>
       <Ionicons name={name} size={18} color="#0F172A" />
-    </View>
+    </TouchableOpacity>
   );
 }
 
