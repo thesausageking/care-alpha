@@ -56,7 +56,15 @@ export default function App() {
   }, []);
 
   const startPayment = async () => {
-    if (!selectedDoctor || !patientId) return;
+    if (!selectedDoctor) {
+      setStatus('Pick a doctor first');
+      return;
+    }
+
+    if (!patientId) {
+      setStatus('Auth not ready: enable Anonymous sign-in in Supabase Auth > Providers');
+      return;
+    }
 
     const paymentsApi = process.env.EXPO_PUBLIC_PAYMENTS_API_URL;
     if (!paymentsApi) {
