@@ -132,7 +132,7 @@ export default function App() {
           <View style={styles.filterBar}>
             <View style={styles.rowBetween}>
               <FilterChip
-                label={`Filters • ${mode} • ${visitType} • ≤£${priceCap} • ${distanceKm}km`}
+                label="Filters"
                 active={filtersOpen}
                 onPress={() => setFiltersOpen((v) => !v)}
               />
@@ -281,11 +281,11 @@ const styles = StyleSheet.create({
   panelLabel: { marginTop: 2, color: '#334155', fontWeight: '700', fontSize: 12 },
   dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 6 },
   filterMeta: { marginTop: 8, color: '#0F172A', fontSize: 12, fontWeight: '600' },
-  map: { height: 260, marginHorizontal: 16, borderRadius: 16 },
+  map: { height: 230, marginHorizontal: 16, borderRadius: 16 },
   marker: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 6 },
   markerActive: { borderWidth: 2, borderColor: '#0F172A' },
   markerText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 110 },
+  listWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 72 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: '#0F172A', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
