@@ -33,10 +33,10 @@ create table if not exists bookings (
   id uuid primary key default gen_random_uuid(),
   patient_id uuid not null references profiles(id) on delete cascade,
   doctor_id uuid not null references doctors(id) on delete cascade,
-  slot_id uuid not null references availability_slots(id),
+  slot_id uuid references availability_slots(id),
   status text not null default 'confirmed', -- confirmed|cancelled|completed|no_show
-  consultation_price_gbp integer not null,
-  deposit_gbp integer not null,
+  consultation_price_gbp numeric(10,2) not null,
+  deposit_gbp numeric(10,2) not null,
   created_at timestamptz default now()
 );
 

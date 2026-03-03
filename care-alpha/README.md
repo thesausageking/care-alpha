@@ -16,13 +16,18 @@ npm install
 npm run ios
 ```
 
-## Next integrations (in this order)
-1. Supabase auth + profile creation
-2. Doctor onboarding + GMC verification status
+## Current integration status
+1. Supabase anonymous auth + patient profile upsert ✅
+2. Live doctor list pulled from Supabase (`doctors` + `profiles`) ✅
+3. Booking insert on confirm (deposit + price) ✅
+4. Stripe payment is still mocked in-app (next step)
+
+## Next integrations (in order)
+1. Real Stripe PaymentSheet + backend intent endpoint
+2. Doctor onboarding + GMC verification workflow
 3. Slot search by distance + time
-4. Booking creation + Stripe deposit checkout
-5. Webhook for booking/payment status
-6. Reviews + support flow
+4. Webhooks for payment/booking status
+5. Reviews + support flow
 
 ## Required keys
 Copy `.env.example` to `.env` and fill values:
