@@ -11,7 +11,6 @@ import {
 import * as Linking from 'expo-linking';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import { Picker } from '@react-native-picker/picker';
 import { supabase } from './lib.supabase';
 
 type Doctor = {
@@ -80,6 +79,7 @@ export default function App() {
   const [screen, setScreen] = useState<'map' | 'confirmed'>('map');
   const [isPaying, setIsPaying] = useState(false);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const [showTimeMenu, setShowTimeMenu] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -119,7 +119,7 @@ export default function App() {
           setDoctors(mapped);
         }
 
-        setStatus('Live data connected ✅');
+        setStatus('Live data connected');
       } catch (e: any) {
         setDoctors(GP_DOCTORS);
         setStatus(`Using GP demo data (${e.message})`);
@@ -276,14 +276,26 @@ export default function App() {
             <Text style={styles.status}>{status}</Text>
             <Text style={styles.gpOnly}>GP only</Text>
 
-            <View style={styles.wheelWrap}>
-              <Text style={styles.wheelLabel}>Time</Text>
-              <Picker selectedValue={selectedTime} onValueChange={(v) => setSelectedTime(v)} style={styles.wheel}>
+            <TouchableOpacity style={styles.timeButton} onPress={() => setShowTimeMenu((v) => !v)}>
+              <Text style={styles.timeButtonText}>Time: {selectedTime} ▾</Text>
+            </TouchableOpacity>
+
+            {showTimeMenu && (
+              <View style={styles.timeMenu}>
                 {TIME_OPTIONS.map((t) => (
-                  <Picker.Item key={t} label={t} value={t} />
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.timeOption, selectedTime === t && styles.timeOptionActive]}
+                    onPress={() => {
+                      setSelectedTime(t);
+                      setShowTimeMenu(false);
+                    }}
+                  >
+                    <Text style={styles.timeOptionText}>{t}</Text>
+                  </TouchableOpacity>
                 ))}
-              </Picker>
-            </View>
+              </View>
+            )}
           </View>
 
           {selectedDoctor ? (
@@ -355,9 +367,27 @@ const styles = StyleSheet.create({
   logo: { fontSize: 24, fontWeight: '800', color: '#0B1F3A' },
   status: { fontSize: 11, color: '#334155' },
   gpOnly: { fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginTop: 4 },
-  wheelWrap: { marginTop: 8 },
-  wheelLabel: { fontSize: 12, color: '#334155', fontWeight: '700' },
-  wheel: { height: 48, marginTop: -8 },
+  timeButton: {
+    marginTop: 8,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  timeButtonText: { fontSize: 13, color: '#0B1F3A', fontWeight: '700' },
+  timeMenu: {
+    marginTop: 6,
+    maxHeight: 180,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  timeOption: { paddingHorizontal: 10, paddingVertical: 8 },
+  timeOptionActive: { backgroundColor: '#DBEAFE' },
+  timeOptionText: { color: '#0F172A', fontSize: 13 },
   pin: {
     backgroundColor: '#0B1F3A',
     paddingHorizontal: 10,
