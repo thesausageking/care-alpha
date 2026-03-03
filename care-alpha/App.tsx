@@ -39,7 +39,7 @@ const DOCTORS: Doctor[] = [
   { id: 'd3', name: 'Dr Ahmed', price: 70, rating: 4.9, nextSlot: '13:00', address: 'Moorgate Practice', lat: 51.5187, lng: -0.0886, availableTimes: ['08:30', '11:00', '13:00', '15:30', '18:00'] },
 ];
 
-const TIME_OPTIONS = buildTimeOptions('08:00', '20:00', 15);
+const TIME_OPTIONS = ['Now', ...buildTimeOptions('08:00', '20:00', 15)];
 
 export default function App() {
   const [patientId, setPatientId] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function App() {
   const [region, setRegion] = useState<Region>(LONDON_REGION);
   const mapRef = useRef<MapView | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>(DOCTORS);
-  const [selectedTime, setSelectedTime] = useState('12:00');
+  const [selectedTime, setSelectedTime] = useState('Now');
   const [showTimeMenu, setShowTimeMenu] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [screen, setScreen] = useState<'map' | 'confirmed'>('map');
@@ -97,13 +97,16 @@ export default function App() {
     })();
   }, [doctors]);
 
-  const filteredDoctors = useMemo(() => doctors.filter((d) => d.availableTimes.includes(selectedTime)), [doctors, selectedTime]);
+  const filteredDoctors = useMemo(() => {
+    if (selectedTime === 'Now') return doctors;
+    return doctors.filter((d) => d.availableTimes.includes(selectedTime));
+  }, [doctors, selectedTime]);
   const deposit = useMemo(() => Number((((selectedDoctor?.price ?? 0) * 0.15).toFixed(2)),), [selectedDoctor]);
 
   const recenterToUser = async () => {
     const { status: perm } = await Location.requestForegroundPermissionsAsync();
     if (perm !== 'granted') {
-      setStatus('Location denied • defaulting to London');
+      setStatus('Location denied • using London');
       setRegion(LONDON_REGION);
       mapRef.current?.animateToRegion(LONDON_REGION, 450);
       return;
@@ -116,6 +119,16 @@ export default function App() {
       latitudeDelta: 0.02,
       longitudeDelta: 0.02,
     };
+
+    // Simulator often defaults to SF; keep product focused on London for now.
+    const inUk = next.latitude > 49 && next.latitude < 61 && next.longitude > -9 && next.longitude < 2;
+    if (!inUk) {
+      setStatus('Simulator location outside UK • showing London');
+      setRegion(LONDON_REGION);
+      mapRef.current?.animateToRegion(LONDON_REGION, 450);
+      return;
+    }
+
     setRegion(next);
     mapRef.current?.animateToRegion(next, 450);
     setStatus('');
@@ -169,6 +182,7 @@ export default function App() {
             {filteredDoctors.map((d) => (
               <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelectedDoctor(d)}>
                 <View style={[styles.markerChip, selectedDoctor?.id === d.id && styles.markerChipActive]}>
+                  <Ionicons name="medical" size={12} color="white" />
                   <Text style={styles.markerText}>£{d.price}</Text>
                 </View>
               </Marker>
@@ -178,11 +192,13 @@ export default function App() {
           <View style={styles.floatingTop}>
             <View style={styles.iconRow}>
               <CircleIcon name="chevron-back" />
-              <CircleIcon name="locate" onPress={recenterToUser} />
+              <View style={styles.iconRowRight}>
+                <MiniButton label="London" onPress={() => { setRegion(LONDON_REGION); mapRef.current?.animateToRegion(LONDON_REGION, 450); }} />
+                <CircleIcon name="locate" onPress={recenterToUser} />
+              </View>
             </View>
             <Text style={styles.brand}>Care</Text>
             {!!status && <Text style={styles.status}>{status}</Text>}
-            <Text style={styles.subtitle}>GP appointments</Text>
 
             <TouchableOpacity style={styles.timeBtn} onPress={() => setShowTimeMenu((v) => !v)}>
               <Text style={styles.timeBtnText}>Time {selectedTime} ▾</Text>
@@ -241,6 +257,14 @@ function CircleIcon({ name, onPress }: { name: keyof typeof Ionicons.glyphMap; o
   );
 }
 
+function MiniButton({ label, onPress }: { label: string; onPress?: () => void }) {
+  return (
+    <TouchableOpacity style={styles.miniBtn} onPress={onPress}>
+      <Text style={styles.miniBtnText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function buildTimeOptions(start: string, end: string, step: number) {
   const toMin = (s: string) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
   const fromMin = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
@@ -254,10 +278,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
   floatingTop: { position: 'absolute', top: 10, left: 12, right: 12 },
-  iconRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  iconRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' },
+  iconRowRight: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' },
-  brand: { fontSize: 28, fontWeight: '800', color: '#0F172A' },
-  subtitle: { fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginTop: 2 },
+  miniBtn: { backgroundColor: 'white', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 },
+  miniBtnText: { color: '#0F172A', fontWeight: '700', fontSize: 12 },
+  brand: { fontSize: 36, lineHeight: 38, fontWeight: '300', color: '#0F172A', fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined },
   status: { fontSize: 11, color: '#475569' },
   timeBtn: { marginTop: 8, alignSelf: 'flex-start', backgroundColor: 'white', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   timeBtnText: { fontWeight: '700', color: '#0F172A' },
@@ -265,7 +291,7 @@ const styles = StyleSheet.create({
   menuItem: { paddingHorizontal: 12, paddingVertical: 8 },
   menuText: { color: '#334155' },
   menuTextActive: { color: '#0F172A', fontWeight: '800' },
-  markerChip: { backgroundColor: '#0B1F3A', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  markerChip: { backgroundColor: '#0B1F3A', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 4 },
   markerChipActive: { backgroundColor: '#1D4ED8' },
   markerText: { color: 'white', fontWeight: '800', fontSize: 12 },
   sheet: {
