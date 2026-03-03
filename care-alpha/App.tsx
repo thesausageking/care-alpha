@@ -129,16 +129,6 @@ export default function App() {
 
   const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? doctors[0] ?? null;
 
-  const zoomBy = (factor: number) => {
-    const next: Region = {
-      ...mapRegion,
-      latitudeDelta: Math.max(0.005, Math.min(0.2, mapRegion.latitudeDelta * factor)),
-      longitudeDelta: Math.max(0.005, Math.min(0.2, mapRegion.longitudeDelta * factor)),
-    };
-    setMapRegion(next);
-    mapRef.current?.animateToRegion(next, 220);
-  };
-
   const bookingProgress =
     homeStage === 'booking1' ? 0.34 :
     homeStage === 'booking2' ? 0.67 :
@@ -154,21 +144,14 @@ export default function App() {
           <View style={styles.header}>
             <Text style={styles.brand}>Care.</Text>
             <View style={styles.headerIcons}>
+              <CircleIcon name="options-outline" onPress={() => setFiltersOpen((v) => !v)} />
               <CircleIcon name="shield-checkmark-outline" />
               <CircleIcon name="person-circle-outline" />
             </View>
           </View>
 
-          <View style={styles.filterBar}>
-            <View style={styles.rowBetween}>
-              <FilterChip
-                label="Filters"
-                active={filtersOpen}
-                onPress={() => setFiltersOpen((v) => !v)}
-              />
-            </View>
-
-            {filtersOpen && (
+          {filtersOpen && (
+            <View style={styles.filterSheetWrap}>
               <View style={styles.dropdownPanel}>
                 <Text style={styles.panelLabel}>Time</Text>
                 <View style={styles.dropdownRow}>
@@ -197,11 +180,13 @@ export default function App() {
                     <SmallButton key={item} label={`${item}km`} primary={item === distanceKm} onPress={() => setDistanceKm(item)} />
                   ))}
                 </View>
+
+                <View style={styles.rowGap}>
+                  <BackButton onPress={() => setFiltersOpen(false)} />
+                </View>
               </View>
-            )}
-
-
-          </View>
+            </View>
+          )}
 
           <MapView
             ref={mapRef}
@@ -417,14 +402,6 @@ export default function App() {
 }
 
 
-function FilterChip({ label, active, onPress }: { label: string; active?: boolean; onPress?: () => void }) {
-  return (
-    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]} numberOfLines={1}>{label} ▾</Text>
-    </TouchableOpacity>
-  );
-}
-
 function SmallButton({ label, primary, onPress }: { label: string; primary?: boolean; onPress?: () => void }) {
   return (
     <TouchableOpacity style={[styles.smallBtn, primary && styles.smallBtnPrimary]} onPress={onPress}>
@@ -487,12 +464,14 @@ const styles = StyleSheet.create({
   brand: { fontSize: 40, fontWeight: '300', color: '#0F172A' },
   headerIcons: { flexDirection: 'row', gap: 8 },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  filterBar: { paddingHorizontal: 0, paddingBottom: 8 },
   rowGap: { flexDirection: 'row', gap: 8, marginTop: 6, marginBottom: 4 },
-  chip: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999, maxWidth: '100%' },
-  chipActive: { backgroundColor: '#1D4ED8' },
-  chipText: { color: '#0F172A', fontWeight: '600' },
-  chipTextActive: { color: '#fff' },
+  filterSheetWrap: {
+    position: 'absolute',
+    top: 68,
+    left: 8,
+    right: 8,
+    zIndex: 20,
+  },
   dropdownPanel: { marginTop: 8, backgroundColor: '#fff', borderRadius: 14, padding: 10 },
   panelLabel: { marginTop: 2, color: '#334155', fontWeight: '700', fontSize: 12 },
   dropdownRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 6 },
