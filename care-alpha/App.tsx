@@ -155,10 +155,10 @@ export default function App() {
       {showIntro ? (
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -26 }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -26 }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -26 }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -26 }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -10 }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -10 }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -10 }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
+            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -10 }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
             <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
           </View>
         </View>
@@ -484,21 +484,21 @@ const styles = StyleSheet.create({
   introWrap: { flex: 1, backgroundColor: '#0B1F3A', alignItems: 'center', justifyContent: 'center' },
   introRow: { flexDirection: 'row', alignItems: 'flex-end' },
   introLetter: {
-    fontSize: 52,
-    fontWeight: '200',
+    fontSize: 40,
+    fontWeight: '300',
     color: '#BFDBFE',
-    marginHorizontal: 2,
-    opacity: 0.15,
+    marginHorizontal: 1,
+    opacity: 0.18,
     fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
   },
   introLetterOn: { color: '#fff', opacity: 1 },
   introDot: {
-    fontSize: 52,
-    fontWeight: '200',
+    fontSize: 40,
+    fontWeight: '300',
     color: '#93C5FD',
-    marginLeft: 2,
+    marginLeft: 1,
     opacity: 0,
-    transform: [{ translateX: 26 }],
+    transform: [{ translateX: 22 }],
     fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : undefined,
   },
   introDotOn: { opacity: 1, transform: [{ translateX: 0 }], color: '#fff' },
