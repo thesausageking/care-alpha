@@ -460,7 +460,7 @@ function NavItem({ label, icon, active, onPress }: { label: string; icon: keyof 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F8FAFC' },
   homeWrap: { flex: 1, paddingHorizontal: 4 },
-  header: { paddingHorizontal: 0, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: { paddingHorizontal: 0, paddingTop: 8, paddingBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brand: { fontSize: 40, fontWeight: '300', color: '#0F172A' },
   headerIcons: { flexDirection: 'row', gap: 8 },
   circle: { width: 38, height: 38, borderRadius: 999, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
