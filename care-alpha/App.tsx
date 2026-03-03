@@ -1,6 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -99,7 +101,8 @@ export default function App() {
   const mapRef = useRef<MapView | null>(null);
   const [mapRegion, setMapRegion] = useState<Region>(LONDON_REGION);
   const [showIntro, setShowIntro] = useState(true);
-  const [introStep, setIntroStep] = useState(0);
+  const introVals = useRef([0, 0, 0, 0].map(() => new Animated.Value(0))).current;
+  const dotVal = useRef(new Animated.Value(0)).current;
   const [tab, setTab] = useState<Tab>('home');
   const [mode, setMode] = useState<CareMode>('ASAP');
   const [distanceKm, setDistanceKm] = useState(3);
@@ -133,14 +136,26 @@ export default function App() {
   const selectedDoctor = doctors.find((d) => d.id === selectedDoctorId) ?? doctors[0] ?? null;
 
   useEffect(() => {
-    const steps = [350, 650, 950, 1250, 1600];
-    const timers = steps.map((ms, i) => setTimeout(() => setIntroStep(i + 1), ms));
-    const done = setTimeout(() => setShowIntro(false), 2300);
-    return () => {
-      timers.forEach(clearTimeout);
-      clearTimeout(done);
-    };
-  }, []);
+    const letterAnims = introVals.map((v, i) =>
+      Animated.timing(v, {
+        toValue: 1,
+        duration: 380,
+        delay: i * 170,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    );
+
+    Animated.sequence([
+      Animated.stagger(120, letterAnims),
+      Animated.timing(dotVal, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowIntro(false));
+  }, [dotVal, introVals]);
 
   const bookingProgress =
     homeStage === 'booking1' ? 0.34 :
@@ -155,11 +170,37 @@ export default function App() {
       {showIntro ? (
         <View style={styles.introWrap}>
           <View style={styles.introRow}>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 1 ? 0 : -10 }, { rotate: introStep >= 1 ? '0deg' : '-10deg' }] }, introStep >= 1 && styles.introLetterOn]}>C</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 2 ? 0 : -10 }, { rotate: introStep >= 2 ? '0deg' : '8deg' }] }, introStep >= 2 && styles.introLetterOn]}>a</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 3 ? 0 : -10 }, { rotate: introStep >= 3 ? '0deg' : '-7deg' }] }, introStep >= 3 && styles.introLetterOn]}>r</Text>
-            <Text style={[styles.introLetter, { transform: [{ translateY: introStep >= 4 ? 0 : -10 }, { rotate: introStep >= 4 ? '0deg' : '9deg' }] }, introStep >= 4 && styles.introLetterOn]}>e</Text>
-            <Text style={[styles.introDot, introStep >= 5 && styles.introDotOn]}>.</Text>
+            {['C', 'a', 'r', 'e'].map((ch, i) => {
+              const rotateStart = i % 2 === 0 ? '-9deg' : '8deg';
+              return (
+                <Animated.Text
+                  key={ch}
+                  style={[
+                    styles.introLetter,
+                    {
+                      opacity: introVals[i].interpolate({ inputRange: [0, 1], outputRange: [0.1, 1] }),
+                      transform: [
+                        { translateY: introVals[i].interpolate({ inputRange: [0, 1], outputRange: [-18, 0] }) },
+                        { rotate: introVals[i].interpolate({ inputRange: [0, 1], outputRange: [rotateStart, '0deg'] }) },
+                      ],
+                    },
+                  ]}
+                >
+                  {ch}
+                </Animated.Text>
+              );
+            })}
+            <Animated.Text
+              style={[
+                styles.introDot,
+                {
+                  opacity: dotVal,
+                  transform: [{ translateX: dotVal.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }],
+                },
+              ]}
+            >
+              .
+            </Animated.Text>
           </View>
         </View>
       ) : tab === 'home' ? (
