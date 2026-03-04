@@ -15,6 +15,7 @@ export function HomeScreen({ onBooked }: Props) {
   const [mode, setMode] = useState<AvailabilityMode>('Now');
   const [time, setTime] = useState('15:00');
   const [selected, setSelected] = useState<Doctor | null>(null);
+  const [movedArea, setMovedArea] = useState(false);
 
   const doctors = useMemo(() => {
     if (mode === 'Now') return mockDoctors.filter((d) => d.availableNow);
@@ -41,6 +42,7 @@ export function HomeScreen({ onBooked }: Props) {
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
+        onRegionChangeComplete={() => setMovedArea(true)}
         clusterColor={light.primary}
       >
         {doctors.map((d) => (
@@ -52,17 +54,30 @@ export function HomeScreen({ onBooked }: Props) {
         ))}
       </MapView>
 
+      {movedArea && (
+        <TouchableOpacity style={styles.searchAreaBtn} onPress={() => setMovedArea(false)}>
+          <Text style={styles.searchAreaText}>Search this area</Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView style={styles.sheet} contentContainerStyle={{ paddingBottom: 90 }}>
-        {(selected ? [selected] : doctors).map((d) => (
-          <View key={d.id} style={styles.card}>
-            <Text style={styles.name}>{d.name}</Text>
-            <Text style={styles.meta}>{d.specialty} • ★ {d.rating} ({d.reviews}) • {d.etaMin} min</Text>
-            <Text style={styles.meta}>From £{d.price}</Text>
-            <TouchableOpacity style={styles.cta} onPress={() => onBooked(d)}>
-              <Text style={styles.ctaText}>Book now</Text>
-            </TouchableOpacity>
+        {doctors.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.name}>No doctors available</Text>
+            <Text style={styles.meta}>{mode === 'Now' ? 'No nearby doctors right now.' : `No doctors available at ${time}.`}</Text>
           </View>
-        ))}
+        ) : (
+          (selected ? [selected] : doctors).map((d) => (
+            <View key={d.id} style={styles.card}>
+              <Text style={styles.name}>{d.name}</Text>
+              <Text style={styles.meta}>{d.specialty} • ★ {d.rating} ({d.reviews}) • {d.etaMin} min</Text>
+              <Text style={styles.meta}>From £{d.price}</Text>
+              <TouchableOpacity style={styles.cta} onPress={() => onBooked(d)}>
+                <Text style={styles.ctaText}>Book now</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -78,6 +93,17 @@ const styles = StyleSheet.create({
   timeText: { color: light.text, fontWeight: '600' },
   timeTextActive: { color: '#fff' },
   map: { height: 300, margin: spacing.md, borderRadius: radii.lg },
+  searchAreaBtn: {
+    position: 'absolute',
+    top: 170,
+    alignSelf: 'center',
+    zIndex: 20,
+    backgroundColor: light.navy,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  searchAreaText: { color: '#fff', fontWeight: '700' },
   marker: { backgroundColor: light.navy, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   markerPrice: { color: '#fff', fontWeight: '700' },
   sheet: { flex: 1, paddingHorizontal: spacing.md },
