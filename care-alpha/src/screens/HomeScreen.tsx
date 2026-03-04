@@ -5,7 +5,7 @@ import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Doctor, AvailabilityMode } from '../types';
 import { doctors as mockDoctors } from '../data/mock';
-import { light, radii, spacing } from '../theme/tokens';
+import { light, radii, shadows, spacing } from '../theme/tokens';
 import { SegmentedControl } from '../components/SegmentedControl';
 
 type Props = {
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   timePillActive: { backgroundColor: light.primary },
   timeText: { color: light.text, fontWeight: '600' },
   timeTextActive: { color: '#fff' },
-  map: { height: 300, margin: spacing.md, borderRadius: radii.lg },
+  map: { height: 300, margin: spacing.md, borderRadius: radii.lg, overflow: 'hidden' },
   mapState: { backgroundColor: light.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: light.border },
   searchAreaBtn: {
     position: 'absolute',
@@ -207,13 +207,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    ...shadows.raised,
   },
   searchAreaText: { color: '#fff', fontWeight: '700' },
   marker: { backgroundColor: light.navy, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   markerPrice: { color: '#fff', fontWeight: '700' },
   sheet: { flex: 1, paddingHorizontal: spacing.md },
-  card: { backgroundColor: light.surface, borderRadius: radii.md, padding: spacing.lg, marginBottom: spacing.md },
-  profileSheet: { backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.lg, marginBottom: spacing.md },
+  card: { backgroundColor: light.surface, borderRadius: radii.md, padding: spacing.lg, marginBottom: spacing.md, ...shadows.soft },
+  profileSheet: { backgroundColor: light.surface, borderRadius: radii.xl, padding: spacing.lg, marginBottom: spacing.md, ...shadows.raised },
   profileHeader: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   avatar: { width: 56, height: 56, borderRadius: 999, backgroundColor: light.primarySoft },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },

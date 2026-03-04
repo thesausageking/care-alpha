@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { light, radii, spacing } from '../theme/tokens';
+import { light, radii, shadows, spacing } from '../theme/tokens';
 
 type Segment = 'Upcoming' | 'Past' | 'Cancelled';
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   segActive: { backgroundColor: light.primary },
   segText: { color: light.text, fontWeight: '600' },
   segTextActive: { color: '#fff' },
-  card: { backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.lg },
+  card: { backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.lg, ...shadows.soft },
   title: { fontSize: 20, fontWeight: '700', color: light.text },
   meta: { marginTop: 6, color: light.subtext },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { light, radii, spacing } from '../theme/tokens';
+import { light, radii, shadows, spacing } from '../theme/tokens';
 
 type Props = {
   booked?: boolean;
@@ -82,7 +82,7 @@ export function MessagesScreen({ booked = true }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: light.bg, padding: spacing.md },
-  sectionCard: { backgroundColor: light.surface, borderRadius: radii.md, padding: spacing.md, marginBottom: spacing.sm },
+  sectionCard: { backgroundColor: light.surface, borderRadius: radii.md, padding: spacing.md, marginBottom: spacing.sm, ...shadows.soft },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: light.text },
   sub: { color: light.subtext, marginTop: 4 },
   list: { flex: 1 },
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   bubbleText: { color: light.text },
   time: { marginTop: 4, color: '#94A3B8', fontSize: 11, textAlign: 'right' },
   safety: { color: '#64748B', marginTop: spacing.sm, fontSize: 12 },
-  composer: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: 58, padding: spacing.sm, backgroundColor: light.surface, borderWidth: 1, borderColor: light.border, borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  composer: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: 58, padding: spacing.sm, backgroundColor: light.surface, borderWidth: 1, borderColor: light.border, borderRadius: radii.md, flexDirection: 'row', gap: spacing.sm, alignItems: 'center', ...shadows.raised },
   attach: { width: 36, height: 36, borderRadius: 999, backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center' },
   attachText: { color: light.text, fontWeight: '700', fontSize: 18 },
   input: { flex: 1, backgroundColor: light.bg, borderRadius: radii.md, paddingHorizontal: spacing.md, minHeight: 42, color: light.text },

@@ -38,5 +38,23 @@ export const radii = {
   sm: 10,
   md: 14,
   lg: 18,
+  xl: 24,
   pill: 999,
+};
+
+export const shadows = {
+  soft: {
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  raised: {
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
 };

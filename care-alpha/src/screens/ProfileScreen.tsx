@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { light, radii, spacing } from '../theme/tokens';
+import { light, radii, shadows, spacing } from '../theme/tokens';
 
 export function ProfileScreen({ onSessionTimeout }: { onSessionTimeout?: () => void }) {
   return (
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   avatar: { width: 84, height: 84, borderRadius: 999, backgroundColor: light.surface, borderWidth: 1, borderColor: light.border, alignSelf: 'center' },
   name: { marginTop: spacing.md, fontSize: 26, fontWeight: '700', color: light.text, textAlign: 'center' },
   meta: { marginTop: 6, color: light.subtext, textAlign: 'center' },
-  group: { marginTop: spacing.lg, backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.md },
+  group: { marginTop: spacing.lg, backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.md, ...shadows.soft },
   groupTitle: { color: light.text, fontWeight: '700', marginBottom: spacing.sm },
   item: { paddingVertical: spacing.sm },
   itemText: { color: light.subtext },
