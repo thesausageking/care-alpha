@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       {
         amount: Math.round(deposit * 100),
         currency: 'gbp',
-        automatic_payment_methods: { enabled: true },
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
         setup_future_usage: 'off_session',
         metadata: {
           hold_id: hold.id,
