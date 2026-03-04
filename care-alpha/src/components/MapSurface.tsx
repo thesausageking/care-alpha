@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import Mapbox from '@rnmapbox/maps';
+import { StyleSheet, Text, View } from 'react-native';
+import ClusteredMapView from 'react-native-map-clustering';
+import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export type MapPoint = {
   id: string;
@@ -15,51 +16,69 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
-Mapbox.setTelemetryEnabled(false);
+let Mapbox: any = null;
+try {
+  // Optional native module; may not exist in Expo Go.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Mapbox = require('@rnmapbox/maps').default;
+} catch {
+  Mapbox = null;
+}
+
 const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
-if (token) {
-  Mapbox.setAccessToken(token);
+if (Mapbox && token) {
+  try {
+    Mapbox.setTelemetryEnabled(false);
+    Mapbox.setAccessToken(token);
+  } catch {
+    // no-op
+  }
 }
 
 export function MapSurface({ points, onSelect }: Props) {
-  const hasToken = !!token;
-
   const center = useMemo(() => {
-    if (!points.length) return [-0.09, 51.515] as [number, number];
-    return [points[0].lng, points[0].lat] as [number, number];
+    if (!points.length) return { latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 };
+    return { latitude: points[0].lat, longitude: points[0].lng, latitudeDelta: 0.06, longitudeDelta: 0.06 };
   }, [points]);
 
-  if (!hasToken) {
+  if (Mapbox && token) {
     return (
-      <View style={styles.fallback}>
-        <Text style={styles.fallbackTitle}>Mapbox token missing</Text>
-        <Text style={styles.fallbackText}>Set EXPO_PUBLIC_MAPBOX_TOKEN to enable premium map style.</Text>
+      <View style={styles.wrap}>
+        <Mapbox.MapView style={styles.map} logoEnabled={false} attributionEnabled styleURL={Mapbox.StyleURL.Street}>
+          <Mapbox.Camera zoomLevel={12.5} centerCoordinate={[center.longitude, center.latitude]} animationMode="easeTo" />
+          {points.map((p) => (
+            <Mapbox.PointAnnotation key={p.id} id={p.id} coordinate={[p.lng, p.lat]} onSelected={() => onSelect(p.id)}>
+              <View style={styles.markerWrap}>
+                <View style={styles.pricePill}><Text style={styles.priceText}>£{p.price}</Text></View>
+                <View style={styles.pin}><Text style={styles.pinText}>✚</Text></View>
+              </View>
+            </Mapbox.PointAnnotation>
+          ))}
+        </Mapbox.MapView>
+        <View style={styles.attributionPill}><Text style={styles.attrText}>Mapbox</Text></View>
       </View>
     );
   }
 
+  // Safe fallback for Expo Go / no native Mapbox build.
   return (
     <View style={styles.wrap}>
-      <Mapbox.MapView
+      <ClusteredMapView
         style={styles.map}
-        logoEnabled={false}
-        attributionEnabled
-        styleURL={Mapbox.StyleURL.Street}
-        compassEnabled
-        scaleBarEnabled={false}
+        provider={PROVIDER_GOOGLE}
+        initialRegion={center}
+        clusterColor="#0F766E"
       >
-        <Mapbox.Camera zoomLevel={12.5} centerCoordinate={center} animationMode="easeTo" />
-
         {points.map((p) => (
-          <Mapbox.PointAnnotation key={p.id} id={p.id} coordinate={[p.lng, p.lat]} onSelected={() => onSelect(p.id)}>
+          <Marker key={p.id} coordinate={{ latitude: p.lat, longitude: p.lng }} onPress={() => onSelect(p.id)}>
             <View style={styles.markerWrap}>
               <View style={styles.pricePill}><Text style={styles.priceText}>£{p.price}</Text></View>
               <View style={styles.pin}><Text style={styles.pinText}>✚</Text></View>
             </View>
-          </Mapbox.PointAnnotation>
+          </Marker>
         ))}
-      </Mapbox.MapView>
-      <View style={styles.attributionPill}><Text style={styles.attrText}>Mapbox</Text></View>
+      </ClusteredMapView>
+      <View style={styles.attributionPill}><Text style={styles.attrText}>Fallback map</Text></View>
     </View>
   );
 }
@@ -74,7 +93,4 @@ const styles = StyleSheet.create({
   pinText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   attributionPill: { position: 'absolute', bottom: 8, right: 8, backgroundColor: '#ffffffdd', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
   attrText: { fontSize: 11, fontWeight: '600', color: '#334155' },
-  fallback: { flex: 1, borderRadius: 18, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  fallbackTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
-  fallbackText: { marginTop: 6, color: '#475569', textAlign: 'center' },
 });
