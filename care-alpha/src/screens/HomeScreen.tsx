@@ -61,19 +61,55 @@ export function HomeScreen({ onBooked }: Props) {
       )}
 
       <ScrollView style={styles.sheet} contentContainerStyle={{ paddingBottom: 90 }}>
-        {doctors.length === 0 ? (
+        {selected ? (
+          <View style={styles.profileSheet}>
+            <View style={styles.profileHeader}>
+              <View style={styles.avatar} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{selected.name}</Text>
+                <Text style={styles.meta}>{selected.specialty} • ★ {selected.rating} ({selected.reviews})</Text>
+                <Text style={styles.meta}>Verified clinician • {selected.etaMin} min away</Text>
+              </View>
+            </View>
+
+            <View style={styles.chipsRow}>
+              {selected.interests.slice(0, 3).map((i) => (
+                <View key={i} style={styles.interestChip}><Text style={styles.interestText}>{i}</Text></View>
+              ))}
+            </View>
+
+            <Text style={styles.meta}>Consultation fee: £{selected.price}</Text>
+            <Text style={styles.meta}>Deposit today: £{Math.round(selected.price * 0.3)}</Text>
+            <Text style={styles.meta}>Cancellation: 50% fee for no-show/late cancel</Text>
+
+            <View style={styles.slotRow}>
+              {['Now', '15:30', '16:00'].map((s) => (
+                <TouchableOpacity key={s} style={styles.slotPill}><Text style={styles.slotText}>{s}</Text></TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.rowActions}>
+              <TouchableOpacity style={styles.secondaryBtn} onPress={() => setSelected(null)}>
+                <Text style={styles.secondaryText}>Back to map</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.cta, styles.rowCta]} onPress={() => onBooked(selected)}>
+                <Text style={styles.ctaText}>Book now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : doctors.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.name}>No doctors available</Text>
             <Text style={styles.meta}>{mode === 'Now' ? 'No nearby doctors right now.' : `No doctors available at ${time}.`}</Text>
           </View>
         ) : (
-          (selected ? [selected] : doctors).map((d) => (
+          doctors.map((d) => (
             <View key={d.id} style={styles.card}>
               <Text style={styles.name}>{d.name}</Text>
               <Text style={styles.meta}>{d.specialty} • ★ {d.rating} ({d.reviews}) • {d.etaMin} min</Text>
               <Text style={styles.meta}>From £{d.price}</Text>
-              <TouchableOpacity style={styles.cta} onPress={() => onBooked(d)}>
-                <Text style={styles.ctaText}>Book now</Text>
+              <TouchableOpacity style={styles.cta} onPress={() => setSelected(d)}>
+                <Text style={styles.ctaText}>View profile</Text>
               </TouchableOpacity>
             </View>
           ))
@@ -108,8 +144,21 @@ const styles = StyleSheet.create({
   markerPrice: { color: '#fff', fontWeight: '700' },
   sheet: { flex: 1, paddingHorizontal: spacing.md },
   card: { backgroundColor: light.surface, borderRadius: radii.md, padding: spacing.lg, marginBottom: spacing.md },
+  profileSheet: { backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.lg, marginBottom: spacing.md },
+  profileHeader: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  avatar: { width: 56, height: 56, borderRadius: 999, backgroundColor: light.primarySoft },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  interestChip: { backgroundColor: light.primarySoft, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 6 },
+  interestText: { color: light.primary, fontWeight: '600', fontSize: 12 },
+  slotRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  slotPill: { backgroundColor: '#EEF2FF', borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 8 },
+  slotText: { color: light.text, fontWeight: '600' },
+  rowActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  secondaryBtn: { flex: 1, borderWidth: 1, borderColor: light.border, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', minHeight: 46 },
+  secondaryText: { color: light.text, fontWeight: '700' },
   name: { fontSize: 18, fontWeight: '700', color: light.text },
   meta: { color: light.subtext, marginTop: 4 },
-  cta: { marginTop: spacing.md, backgroundColor: light.primary, borderRadius: radii.md, alignItems: 'center', paddingVertical: 12 },
+  cta: { marginTop: spacing.md, backgroundColor: light.primary, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
+  rowCta: { flex: 1, marginTop: 0 },
   ctaText: { color: '#fff', fontWeight: '700' },
 });
