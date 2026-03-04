@@ -119,6 +119,10 @@ export default function App() {
   const [reviewStars, setReviewStars] = useState(0);
   const [activeChatDoctor, setActiveChatDoctor] = useState<string | null>(null);
   const [chatDraft, setChatDraft] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'you' | 'doctor'; text: string }>>([
+    { sender: 'you', text: 'Hi, I’ve booked for later today.' },
+    { sender: 'doctor', text: 'Thanks — share any extra details here.' },
+  ]);
 
   const doctors = useMemo(
     () =>
@@ -444,12 +448,11 @@ export default function App() {
             <Text style={styles.placeholderTitle}>Messages</Text>
             <Text style={styles.meta}>{activeChatDoctor ? `Chat with ${activeChatDoctor}` : 'No active chats yet'}</Text>
 
-            <View style={styles.messageBubbleSelf}>
-              <Text style={styles.messageTextSelf}>Hi, I’ve booked for later today.</Text>
-            </View>
-            <View style={styles.messageBubbleDoctor}>
-              <Text style={styles.messageTextDoctor}>Thanks — share any extra details here.</Text>
-            </View>
+            {chatMessages.map((m, i) => (
+              <View key={`${m.sender}-${i}`} style={m.sender === 'you' ? styles.messageBubbleSelf : styles.messageBubbleDoctor}>
+                <Text style={m.sender === 'you' ? styles.messageTextSelf : styles.messageTextDoctor}>{m.text}</Text>
+              </View>
+            ))}
 
             <View style={styles.composerRow}>
               <TextInput
@@ -459,7 +462,16 @@ export default function App() {
                 value={chatDraft}
                 onChangeText={setChatDraft}
               />
-              <SmallButton label="Send" primary onPress={() => setChatDraft('')} />
+              <SmallButton
+                label="Send"
+                primary
+                onPress={() => {
+                  const text = chatDraft.trim();
+                  if (!text) return;
+                  setChatMessages((prev) => [...prev, { sender: 'you', text }]);
+                  setChatDraft('');
+                }}
+              />
             </View>
           </View>
         </View>
