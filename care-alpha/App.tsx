@@ -443,36 +443,39 @@ export default function App() {
           )}
         </View>
       ) : tab === 'messages' ? (
-        <View style={styles.placeholder}>
-          <View style={styles.card}>
+        <View style={styles.messagesScreen}>
+          <View style={styles.messagesHeader}>
             <Text style={styles.placeholderTitle}>Messages</Text>
             <Text style={styles.meta}>{activeChatDoctor ? `Chat with ${activeChatDoctor}` : 'No active chats yet'}</Text>
+          </View>
 
+          <ScrollView style={styles.messagesList} contentContainerStyle={styles.messagesListContent}>
             {chatMessages.map((m, i) => (
               <View key={`${m.sender}-${i}`} style={m.sender === 'you' ? styles.messageBubbleSelf : styles.messageBubbleDoctor}>
                 <Text style={m.sender === 'you' ? styles.messageTextSelf : styles.messageTextDoctor}>{m.text}</Text>
+                <Text style={styles.messageTime}>now</Text>
               </View>
             ))}
+          </ScrollView>
 
-            <View style={styles.composerRow}>
-              <TextInput
-                style={[styles.reasonInput, styles.composerInput]}
-                placeholder="Type a message"
-                placeholderTextColor="#94A3B8"
-                value={chatDraft}
-                onChangeText={setChatDraft}
-              />
-              <SmallButton
-                label="Send"
-                primary
-                onPress={() => {
-                  const text = chatDraft.trim();
-                  if (!text) return;
-                  setChatMessages((prev) => [...prev, { sender: 'you', text }]);
-                  setChatDraft('');
-                }}
-              />
-            </View>
+          <View style={styles.messagesComposerBar}>
+            <TextInput
+              style={[styles.reasonInput, styles.composerInput]}
+              placeholder="Type a message"
+              placeholderTextColor="#94A3B8"
+              value={chatDraft}
+              onChangeText={setChatDraft}
+            />
+            <SmallButton
+              label="Send"
+              primary
+              onPress={() => {
+                const text = chatDraft.trim();
+                if (!text) return;
+                setChatMessages((prev) => [...prev, { sender: 'you', text }]);
+                setChatDraft('');
+              }}
+            />
           </View>
         </View>
       ) : (
@@ -695,10 +698,14 @@ const styles = StyleSheet.create({
   profileTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
   profileFieldCentered: { color: '#475569', marginTop: 2, textAlign: 'center' },
   profileStack: { marginTop: 8, gap: 8, alignItems: 'center' },
+  messagesScreen: { flex: 1, width: '100%', paddingHorizontal: 4, paddingBottom: 64 },
+  messagesHeader: { paddingHorizontal: 8, paddingTop: 6, paddingBottom: 4 },
+  messagesList: { flex: 1 },
+  messagesListContent: { paddingHorizontal: 8, paddingBottom: 10 },
   messageBubbleSelf: {
     alignSelf: 'flex-end',
     backgroundColor: '#DBEAFE',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginTop: 8,
@@ -708,15 +715,30 @@ const styles = StyleSheet.create({
   messageBubbleDoctor: {
     alignSelf: 'flex-start',
     backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginTop: 6,
     maxWidth: '88%',
   },
   messageTextDoctor: { color: '#0F172A' },
-  composerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  composerInput: { flex: 1, minHeight: 44 },
+  messageTime: { color: '#94A3B8', fontSize: 11, marginTop: 4, alignSelf: 'flex-end' },
+  messagesComposerBar: {
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    bottom: 0,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F8FAFC',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  composerInput: { flex: 1, minHeight: 44, marginTop: 0, marginBottom: 0 },
   profileAvatar: {
     width: 76,
     height: 76,
