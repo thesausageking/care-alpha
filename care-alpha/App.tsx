@@ -468,6 +468,7 @@ export default function App() {
                   <BackButton onPress={() => setHomeStage('booking2')} />
                   <NextButton label="Pay deposit" onPress={() => {
                     setActiveChatDoctor(selectedDoctor?.name ?? null);
+                    setBookingStatus('confirmed');
                     setHomeStage('bookingConfirmed');
                   }} />
                 </View>
@@ -479,7 +480,15 @@ export default function App() {
                 <Text style={styles.name}>Booking confirmed</Text>
                 <Text style={styles.meta}>Confirmation email sent.</Text>
                 <View style={styles.rowGap}>
-                  <SmallButton label="Done" primary onPress={() => setHomeStage('home')} />
+                  <SmallButton label="Back to Home" onPress={() => setHomeStage('home')} />
+                  <SmallButton
+                    label="View Booking"
+                    primary
+                    onPress={() => {
+                      setTab('bookings');
+                      setHomeStage('home');
+                    }}
+                  />
                 </View>
               </View>
             )}
