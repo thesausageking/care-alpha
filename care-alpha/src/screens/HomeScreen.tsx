@@ -6,6 +6,7 @@ import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Doctor, AvailabilityMode } from '../types';
 import { doctors as mockDoctors } from '../data/mock';
 import { light, radii, shadows, spacing } from '../theme/tokens';
+import { brandedMapStyle } from '../theme/mapStyle';
 import { SegmentedControl } from '../components/SegmentedControl';
 
 type Props = {
@@ -73,29 +74,35 @@ export function HomeScreen({ onBooked }: Props) {
           <Text style={styles.meta}>Reconnect to search and book doctors.</Text>
         </View>
       ) : (
-        <MapView
-          style={styles.map}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-          initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
-          onRegionChangeComplete={() => setMovedArea(true)}
-          clusterColor={light.primary}
-        >
-          {doctors.map((d) => (
-            <Marker
-              key={d.id}
-              coordinate={{ latitude: d.lat, longitude: d.lng }}
-              onPress={() => {
-                if (!reduceMotion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelected(d);
-              }}
-              accessibilityLabel={`${d.name}, ${d.specialty}, price ${d.price} pounds`}
-            >
-              <View style={styles.marker}>
-                <Text style={styles.markerPrice}>£{d.price}</Text>
-              </View>
-            </Marker>
-          ))}
-        </MapView>
+        <>
+          <MapView
+            style={styles.map}
+            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            customMapStyle={Platform.OS === 'android' ? (brandedMapStyle as any) : undefined}
+            initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
+            onRegionChangeComplete={() => setMovedArea(true)}
+            clusterColor={light.primary}
+          >
+            {doctors.map((d) => (
+              <Marker
+                key={d.id}
+                coordinate={{ latitude: d.lat, longitude: d.lng }}
+                onPress={() => {
+                  if (!reduceMotion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelected(d);
+                }}
+                accessibilityLabel={`${d.name}, ${d.specialty}, price ${d.price} pounds`}
+              >
+                <View style={styles.marker}>
+                  <Text style={styles.markerPrice}>£{d.price}</Text>
+                </View>
+              </Marker>
+            ))}
+          </MapView>
+          <View style={styles.mapAttributionPill}>
+            <Text style={styles.mapAttributionText}>Branded map style active</Text>
+          </View>
+        </>
       )}
 
       {movedArea && (
@@ -209,6 +216,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     ...shadows.raised,
   },
+  mapAttributionPill: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.md + 6,
+    backgroundColor: '#ffffffdd',
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  mapAttributionText: { color: light.subtext, fontSize: 11, fontWeight: '600' },
   searchAreaText: { color: '#fff', fontWeight: '700' },
   marker: { backgroundColor: light.navy, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   markerPrice: { color: '#fff', fontWeight: '700' },
