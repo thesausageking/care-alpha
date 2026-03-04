@@ -16,6 +16,9 @@ export function HomeScreen({ onBooked }: Props) {
   const [time, setTime] = useState('15:00');
   const [selected, setSelected] = useState<Doctor | null>(null);
   const [movedArea, setMovedArea] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [offline, setOffline] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
 
   const doctors = useMemo(() => {
     if (mode === 'Now') return mockDoctors.filter((d) => d.availableNow);
@@ -30,29 +33,61 @@ export function HomeScreen({ onBooked }: Props) {
         {mode === 'Schedule' && (
           <View style={styles.timeRow}>
             {['15:00', '15:30', '16:00'].map((t) => (
-              <TouchableOpacity key={t} style={[styles.timePill, time === t && styles.timePillActive]} onPress={() => setTime(t)}>
+              <TouchableOpacity
+                key={t}
+                style={[styles.timePill, time === t && styles.timePillActive]}
+                onPress={() => setTime(t)}
+                accessibilityRole="button"
+                accessibilityLabel={`Schedule for ${t}`}
+              >
                 <Text style={[styles.timeText, time === t && styles.timeTextActive]}>{t}</Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
+
+        <View style={styles.statusRow}>
+          <TouchableOpacity style={styles.statusPill} onPress={() => setOffline((v) => !v)}>
+            <Text style={styles.statusText}>{offline ? 'Offline mode' : 'Online'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.statusPill} onPress={() => setLocationDenied((v) => !v)}>
+            <Text style={styles.statusText}>{locationDenied ? 'Location denied' : 'Location on'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <MapView
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
-        onRegionChangeComplete={() => setMovedArea(true)}
-        clusterColor={light.primary}
-      >
-        {doctors.map((d) => (
-          <Marker key={d.id} coordinate={{ latitude: d.lat, longitude: d.lng }} onPress={() => setSelected(d)}>
-            <View style={styles.marker}>
-              <Text style={styles.markerPrice}>£{d.price}</Text>
-            </View>
-          </Marker>
-        ))}
-      </MapView>
+      {locationDenied ? (
+        <View style={[styles.map, styles.mapState]}>
+          <Text style={styles.name}>Location required</Text>
+          <Text style={styles.meta}>Enable location to find doctors nearby.</Text>
+        </View>
+      ) : offline ? (
+        <View style={[styles.map, styles.mapState]}>
+          <Text style={styles.name}>You are offline</Text>
+          <Text style={styles.meta}>Reconnect to search and book doctors.</Text>
+        </View>
+      ) : (
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
+          onRegionChangeComplete={() => setMovedArea(true)}
+          clusterColor={light.primary}
+        >
+          {doctors.map((d) => (
+            <Marker
+              key={d.id}
+              coordinate={{ latitude: d.lat, longitude: d.lng }}
+              onPress={() => setSelected(d)}
+              accessibilityLabel={`${d.name}, ${d.specialty}, price ${d.price} pounds`}
+            >
+              <View style={styles.marker}>
+                <Text style={styles.markerPrice}>£{d.price}</Text>
+              </View>
+            </Marker>
+          ))}
+        </MapView>
+      )}
 
       {movedArea && (
         <TouchableOpacity style={styles.searchAreaBtn} onPress={() => setMovedArea(false)}>
@@ -92,7 +127,18 @@ export function HomeScreen({ onBooked }: Props) {
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => setSelected(null)}>
                 <Text style={styles.secondaryText}>Back to map</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.cta, styles.rowCta]} onPress={() => onBooked(selected)}>
+              <TouchableOpacity
+                style={[styles.cta, styles.rowCta]}
+                onPress={() => {
+                  if (offline) {
+                    setPaymentFailed(true);
+                    return;
+                  }
+                  onBooked(selected);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Book now"
+              >
                 <Text style={styles.ctaText}>Book now</Text>
               </TouchableOpacity>
             </View>
@@ -115,6 +161,15 @@ export function HomeScreen({ onBooked }: Props) {
           ))
         )}
       </ScrollView>
+
+      {paymentFailed && (
+        <View style={styles.errorToast}>
+          <Text style={styles.errorText}>Payment failed. Please retry.</Text>
+          <TouchableOpacity onPress={() => setPaymentFailed(false)}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -124,11 +179,15 @@ const styles = StyleSheet.create({
   topBar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
   brand: { fontSize: 38, fontFamily: 'AvenirNext-Thin', color: light.text },
   timeRow: { flexDirection: 'row', gap: spacing.sm },
+  statusRow: { flexDirection: 'row', gap: spacing.sm },
+  statusPill: { backgroundColor: light.surface, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 6 },
+  statusText: { color: light.subtext, fontSize: 12, fontWeight: '600' },
   timePill: { backgroundColor: light.surface, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   timePillActive: { backgroundColor: light.primary },
   timeText: { color: light.text, fontWeight: '600' },
   timeTextActive: { color: '#fff' },
   map: { height: 300, margin: spacing.md, borderRadius: radii.lg },
+  mapState: { backgroundColor: light.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: light.border },
   searchAreaBtn: {
     position: 'absolute',
     top: 170,
@@ -161,4 +220,18 @@ const styles = StyleSheet.create({
   cta: { marginTop: spacing.md, backgroundColor: light.primary, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
   rowCta: { flex: 1, marginTop: 0 },
   ctaText: { color: '#fff', fontWeight: '700' },
+  errorToast: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: 86,
+    backgroundColor: '#FEE2E2',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorText: { color: '#991B1B', fontWeight: '600' },
+  retryText: { color: light.navy, fontWeight: '700' },
 });
