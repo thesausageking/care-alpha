@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from './lib.supabase';
 
 type Tab = 'home' | 'bookings' | 'messages' | 'profile';
 type HomeStage = 'home' | 'doctorProfile' | 'booking1' | 'booking2' | 'booking4' | 'bookingConfirmed';
@@ -45,6 +46,8 @@ const LONDON_REGION: Region = {
   latitudeDelta: 0.04,
   longitudeDelta: 0.04,
 };
+
+const TEST_PATIENT_ID = 'bb595814-1821-4ee8-bbf1-235f002d3b87';
 
 const DOCTORS: Doctor[] = [
   {
@@ -119,10 +122,8 @@ export default function App() {
   const [reviewStars, setReviewStars] = useState(0);
   const [activeChatDoctor, setActiveChatDoctor] = useState<string | null>(null);
   const [chatDraft, setChatDraft] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'you' | 'doctor'; text: string }>>([
-    { sender: 'you', text: 'Hi, I’ve booked for later today.' },
-    { sender: 'doctor', text: 'Thanks — share any extra details here.' },
-  ]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'you' | 'doctor'; text: string }>>([]);
 
   const doctors = useMemo(
     () =>
@@ -169,6 +170,77 @@ export default function App() {
   const bookingSteps = ['confirmed', 'starting_soon', 'completed'] as const;
   const bookingStepIndex = bookingSteps.indexOf(bookingStatus);
 
+  useEffect(() => {
+    if (tab !== 'messages') return;
+
+    let cancelled = false;
+    let channel: any = null;
+
+    (async () => {
+      // Load latest booking thread for this patient (prototype path)
+      const { data: latestBooking } = await supabase
+        .from('bookings')
+        .select('id,doctor_id')
+        .eq('patient_id', TEST_PATIENT_ID)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latestBooking || cancelled) return;
+
+      const { data: doctorProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', latestBooking.doctor_id)
+        .maybeSingle();
+
+      setActiveChatDoctor(doctorProfile?.full_name ?? 'Doctor');
+
+      const { data: thread } = await supabase
+        .from('chat_threads')
+        .select('id')
+        .eq('booking_id', latestBooking.id)
+        .maybeSingle();
+
+      if (!thread || cancelled) return;
+      setActiveThreadId(thread.id);
+
+      const { data: msgs } = await supabase
+        .from('chat_messages')
+        .select('id,sender_id,body,created_at')
+        .eq('thread_id', thread.id)
+        .order('created_at', { ascending: true });
+
+      if (!cancelled) {
+        setChatMessages(
+          (msgs ?? []).map((m: any) => ({
+            sender: m.sender_id === TEST_PATIENT_ID ? 'you' : 'doctor',
+            text: m.body ?? '',
+          })),
+        );
+      }
+
+      channel = supabase
+        .channel(`chat-${thread.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${thread.id}` },
+          (payload: any) => {
+            const m = payload.new;
+            setChatMessages((prev) => [
+              ...prev,
+              { sender: m.sender_id === TEST_PATIENT_ID ? 'you' : 'doctor', text: m.body ?? '' },
+            ]);
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [tab]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -469,11 +541,22 @@ export default function App() {
             <SmallButton
               label="Send"
               primary
-              onPress={() => {
+              onPress={async () => {
                 const text = chatDraft.trim();
-                if (!text) return;
-                setChatMessages((prev) => [...prev, { sender: 'you', text }]);
+                if (!text || !activeThreadId) return;
+
                 setChatDraft('');
+
+                const { error } = await supabase.from('chat_messages').insert({
+                  thread_id: activeThreadId,
+                  sender_id: TEST_PATIENT_ID,
+                  message_type: 'text',
+                  body: text,
+                });
+
+                if (error) {
+                  setChatDraft(text);
+                }
               }}
             />
           </View>
