@@ -123,6 +123,7 @@ export default function App() {
   const [activeChatDoctor, setActiveChatDoctor] = useState<string | null>(null);
   const [chatDraft, setChatDraft] = useState('');
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [latestBookingId, setLatestBookingId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'you' | 'doctor'; text: string }>>([]);
 
   const doctors = useMemo(
@@ -161,6 +162,29 @@ export default function App() {
       }),
     ]).start(() => setShowIntro(false));
   }, [dotVal, introVals]);
+
+  useEffect(() => {
+    const poll = async () => {
+      const { data: latest } = await supabase
+        .from('bookings')
+        .select('id,status')
+        .eq('patient_id', TEST_PATIENT_ID)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latest) return;
+      setLatestBookingId(latest.id);
+
+      if (latest.status === 'confirmed' && homeStage === 'booking4') {
+        setHomeStage('bookingConfirmed');
+      }
+    };
+
+    poll();
+    const t = setInterval(poll, 4000);
+    return () => clearInterval(t);
+  }, [homeStage]);
 
   const bookingProgress =
     homeStage === 'booking1' ? 0.34 :
@@ -443,10 +467,7 @@ export default function App() {
                 <View style={styles.rowGap}>
                   <BackButton onPress={() => setHomeStage('booking2')} />
                   <NextButton label="Pay deposit" onPress={() => {
-                    setHomeStage('bookingConfirmed');
-                    setBookingStatus('confirmed');
                     setActiveChatDoctor(selectedDoctor?.name ?? null);
-                    setTab('messages');
                   }} />
                 </View>
               </View>
@@ -455,11 +476,7 @@ export default function App() {
             {homeStage === 'bookingConfirmed' && selectedDoctor && (
               <View style={[styles.card, styles.stageCard]}>
                 <Text style={styles.name}>Booking confirmed</Text>
-                <Text style={styles.meta}>What happens next:</Text>
-                <Text style={styles.meta}>• Appointment confirmed</Text>
-                <Text style={styles.meta}>• Status updates: confirmed → starting soon</Text>
-                <Text style={styles.meta}>• Messaging is enabled with safety guidelines</Text>
-                <Text style={styles.meta}>• Pricing + cancellation terms were shown before payment</Text>
+                <Text style={styles.meta}>Confirmation email sent.</Text>
                 <View style={styles.rowGap}>
                   <SmallButton label="Done" primary onPress={() => setHomeStage('home')} />
                 </View>
