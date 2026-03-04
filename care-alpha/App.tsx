@@ -194,6 +194,21 @@ export default function App() {
   const bookingSteps = ['confirmed', 'starting_soon', 'completed'] as const;
   const bookingStepIndex = bookingSteps.indexOf(bookingStatus);
 
+  const resetDemo = () => {
+    setTab('home');
+    setHomeStage('home');
+    setSelectedDoctorId(DOCTORS[0].id);
+    setFiltersOpen(false);
+    setBookingStatus('confirmed');
+    setReviewStars(0);
+    setActiveChatDoctor(null);
+    setChatDraft('');
+    setChatMessages([
+      { sender: 'you', text: 'Hi, I’ve booked for later today.' },
+      { sender: 'doctor', text: 'Thanks — share any extra details here.' },
+    ]);
+  };
+
   useEffect(() => {
     if (tab !== 'messages') return;
 
@@ -311,6 +326,7 @@ export default function App() {
           <View style={styles.header}>
             <Text style={styles.brand}>Care.</Text>
             <View style={styles.headerIcons}>
+              <CircleIcon name="refresh-outline" onPress={resetDemo} />
               <CircleIcon name="options-outline" onPress={() => setFiltersOpen((v) => !v)} />
               <CircleIcon name="shield-checkmark-outline" />
               <CircleIcon name="person-circle-outline" />
