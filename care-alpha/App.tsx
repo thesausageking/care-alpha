@@ -416,7 +416,7 @@ export default function App() {
             </View>
 
             <Text style={styles.meta}>Deposit paid: £{selectedDoctor ? Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100) : 0}</Text>
-            <Text style={styles.meta}>Remainder after appointment</Text>
+            <Text style={styles.meta}>Remainder: pending capture after appointment completion</Text>
           </View>
 
           <View style={[styles.card, { marginTop: 10 }]}>
@@ -443,18 +443,22 @@ export default function App() {
           <View style={styles.card}>
             <Text style={styles.placeholderTitle}>Messages</Text>
             <Text style={styles.meta}>{activeChatDoctor ? `Chat with ${activeChatDoctor}` : 'No active chats yet'}</Text>
-            <View style={[styles.reasonInput, { minHeight: 120 }]}> 
-              <Text style={styles.meta}>You: Hi, I’ve booked for later today.</Text>
-              <Text style={styles.meta}>Doctor: Thanks, please share any additional details here.</Text>
+
+            <View style={styles.messageBubbleSelf}>
+              <Text style={styles.messageTextSelf}>Hi, I’ve booked for later today.</Text>
             </View>
-            <TextInput
-              style={styles.reasonInput}
-              placeholder="Type a message"
-              placeholderTextColor="#94A3B8"
-              value={chatDraft}
-              onChangeText={setChatDraft}
-            />
-            <View style={styles.rowGap}>
+            <View style={styles.messageBubbleDoctor}>
+              <Text style={styles.messageTextDoctor}>Thanks — share any extra details here.</Text>
+            </View>
+
+            <View style={styles.composerRow}>
+              <TextInput
+                style={[styles.reasonInput, styles.composerInput]}
+                placeholder="Type a message"
+                placeholderTextColor="#94A3B8"
+                value={chatDraft}
+                onChangeText={setChatDraft}
+              />
               <SmallButton label="Send" primary onPress={() => setChatDraft('')} />
             </View>
           </View>
@@ -679,6 +683,28 @@ const styles = StyleSheet.create({
   profileTitle: { fontSize: 26, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
   profileFieldCentered: { color: '#475569', marginTop: 2, textAlign: 'center' },
   profileStack: { marginTop: 8, gap: 8, alignItems: 'center' },
+  messageBubbleSelf: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#DBEAFE',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 8,
+    maxWidth: '88%',
+  },
+  messageTextSelf: { color: '#0F172A' },
+  messageBubbleDoctor: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 6,
+    maxWidth: '88%',
+  },
+  messageTextDoctor: { color: '#0F172A' },
+  composerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  composerInput: { flex: 1, minHeight: 44 },
   profileAvatar: {
     width: 76,
     height: 76,
