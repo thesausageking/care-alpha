@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AccessibilityInfo } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AccessibilityInfo, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -75,7 +75,7 @@ export function HomeScreen({ onBooked }: Props) {
       ) : (
         <MapView
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
           onRegionChangeComplete={() => setMovedArea(true)}
           clusterColor={light.primary}
