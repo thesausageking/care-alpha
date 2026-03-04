@@ -8,6 +8,26 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-06-20',
 });
 
+async function sendBookingConfirmationEmail(to: string, bookingId: string) {
+  const resendKey = Deno.env.get('RESEND_API_KEY');
+  const from = Deno.env.get('BOOKING_EMAIL_FROM') || 'Care <no-reply@care.app>';
+  if (!resendKey) return; // optional until configured
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: 'Care. Booking confirmed',
+      html: `<p>Your booking is confirmed.</p><p>Booking reference: <strong>${bookingId}</strong></p>`,
+    }),
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature');
@@ -55,7 +75,7 @@ Deno.serve(async (req) => {
         // Mark hold converted and slot booked
         const { data: booking } = await supabase
           .from('bookings')
-          .select('slot_id')
+          .select('slot_id,patient_id')
           .eq('id', payment.booking_id)
           .single();
 
@@ -69,6 +89,18 @@ Deno.serve(async (req) => {
         }
 
         await supabase.from('chat_threads').insert({ booking_id: payment.booking_id });
+
+        // Send confirmation email (if configured)
+        if (booking?.patient_id) {
+          const { data: patientProfile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', booking.patient_id)
+            .maybeSingle();
+          if (patientProfile?.email) {
+            await sendBookingConfirmationEmail(patientProfile.email, payment.booking_id);
+          }
+        }
       }
     }
 
