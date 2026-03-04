@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AccessibilityInfo, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AccessibilityInfo } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import MapView from 'react-native-map-clustering';
-import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Doctor, AvailabilityMode } from '../types';
 import { doctors as mockDoctors } from '../data/mock';
 import { light, radii, shadows, spacing } from '../theme/tokens';
-import { brandedMapStyle } from '../theme/mapStyle';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { MapSurface } from '../components/MapSurface';
 
 type Props = {
   onBooked: (doctor: Doctor) => void;
@@ -74,35 +72,17 @@ export function HomeScreen({ onBooked }: Props) {
           <Text style={styles.meta}>Reconnect to search and book doctors.</Text>
         </View>
       ) : (
-        <>
-          <MapView
-            style={styles.map}
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-            customMapStyle={Platform.OS === 'android' ? (brandedMapStyle as any) : undefined}
-            initialRegion={{ latitude: 51.515, longitude: -0.09, latitudeDelta: 0.06, longitudeDelta: 0.06 }}
-            onRegionChangeComplete={() => setMovedArea(true)}
-            clusterColor={light.primary}
-          >
-            {doctors.map((d) => (
-              <Marker
-                key={d.id}
-                coordinate={{ latitude: d.lat, longitude: d.lng }}
-                onPress={() => {
-                  if (!reduceMotion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelected(d);
-                }}
-                accessibilityLabel={`${d.name}, ${d.specialty}, price ${d.price} pounds`}
-              >
-                <View style={styles.marker}>
-                  <Text style={styles.markerPrice}>£{d.price}</Text>
-                </View>
-              </Marker>
-            ))}
-          </MapView>
-          <View style={styles.mapAttributionPill}>
-            <Text style={styles.mapAttributionText}>Branded map style active</Text>
-          </View>
-        </>
+        <View style={styles.map}>
+          <MapSurface
+            points={doctors.map((d) => ({ id: d.id, lat: d.lat, lng: d.lng, price: d.price, label: d.name }))}
+            onSelect={(id) => {
+              const found = doctors.find((d) => d.id === id);
+              if (!found) return;
+              if (!reduceMotion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSelected(found);
+            }}
+          />
+        </View>
       )}
 
       {movedArea && (

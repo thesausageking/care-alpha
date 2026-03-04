@@ -38,6 +38,7 @@ npm run android
 - `src/components/*` reusable UI primitives
 
 ## Notes
-- Map uses `react-native-map-clustering` + `react-native-maps` marker overlays.
+- Map is now Mapbox-first via `@rnmapbox/maps` (`src/components/MapSurface.tsx`).
+- Set `EXPO_PUBLIC_MAPBOX_TOKEN` in environment/secrets to render premium branded map.
 - Haptics implemented via `expo-haptics`, reduced-motion aware fallback.
 - Current build is investor-demo focused; backend wiring remains separate.
