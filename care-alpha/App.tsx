@@ -47,7 +47,7 @@ export default function App() {
           />
         );
       case 'messages':
-        return <MessagesScreen />;
+        return <MessagesScreen booked={bookedOnce} />;
       case 'bookings':
         return <BookingsScreen />;
       case 'profile':
