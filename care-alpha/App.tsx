@@ -468,6 +468,7 @@ export default function App() {
                   <BackButton onPress={() => setHomeStage('booking2')} />
                   <NextButton label="Pay deposit" onPress={() => {
                     setActiveChatDoctor(selectedDoctor?.name ?? null);
+                    setHomeStage('bookingConfirmed');
                   }} />
                 </View>
               </View>
