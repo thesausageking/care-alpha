@@ -124,7 +124,7 @@ export function HomeScreen({ onBooked }: Props) {
 
             <Text style={styles.meta}>Consultation fee: £{selected.price}</Text>
             <Text style={styles.meta}>Deposit today: £{Math.round(selected.price * 0.3)}</Text>
-            <Text style={styles.meta}>Cancellation: 50% fee for no-show/late cancel</Text>
+            <Text style={styles.meta}>Cancellation policy: 50% fee for late cancel/no-show</Text>
 
             <View style={styles.slotRow}>
               {['Now', '15:30', '16:00'].map((s) => (
@@ -186,8 +186,8 @@ export function HomeScreen({ onBooked }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: light.bg },
-  topBar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
-  brand: { fontSize: 38, fontFamily: 'AvenirNext-Thin', color: light.text },
+  topBar: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm },
+  brand: { fontSize: 40, letterSpacing: 0.2, fontFamily: 'AvenirNext-Thin', color: light.text },
   timeRow: { flexDirection: 'row', gap: spacing.sm },
   statusRow: { flexDirection: 'row', gap: spacing.sm },
   statusPill: { backgroundColor: light.surface, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 6 },
@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
   rowActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   secondaryBtn: { flex: 1, borderWidth: 1, borderColor: light.border, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', minHeight: 46 },
   secondaryText: { color: light.text, fontWeight: '700' },
-  name: { fontSize: 18, fontWeight: '700', color: light.text },
-  meta: { color: light.subtext, marginTop: 4 },
+  name: { fontSize: 19, fontWeight: '700', color: light.text },
+  meta: { color: light.subtext, marginTop: 4, lineHeight: 19 },
   cta: { marginTop: spacing.md, backgroundColor: light.primary, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
   rowCta: { flex: 1, marginTop: 0 },
   ctaText: { color: '#fff', fontWeight: '700' },

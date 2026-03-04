@@ -34,8 +34,8 @@ function Group({ title, items }: { title: string; items: string[] }) {
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: light.bg, padding: spacing.lg },
   avatar: { width: 84, height: 84, borderRadius: 999, backgroundColor: light.surface, borderWidth: 1, borderColor: light.border, alignSelf: 'center' },
-  name: { marginTop: spacing.md, fontSize: 26, fontWeight: '700', color: light.text, textAlign: 'center' },
-  meta: { marginTop: 6, color: light.subtext, textAlign: 'center' },
+  name: { marginTop: spacing.md, fontSize: 27, fontWeight: '700', color: light.text, textAlign: 'center', letterSpacing: 0.1 },
+  meta: { marginTop: 6, color: light.subtext, textAlign: 'center', lineHeight: 19 },
   group: { marginTop: spacing.lg, backgroundColor: light.surface, borderRadius: radii.lg, padding: spacing.md, ...shadows.soft },
   groupTitle: { color: light.text, fontWeight: '700', marginBottom: spacing.sm },
   item: { paddingVertical: spacing.sm },
