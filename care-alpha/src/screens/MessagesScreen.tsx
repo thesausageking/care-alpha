@@ -9,6 +9,7 @@ type Props = {
 export function MessagesScreen({ booked = true }: Props) {
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<string[]>(['Hi doctor, adding context for my appointment.']);
+  const [sendFailed, setSendFailed] = useState(false);
 
   return (
     <View style={styles.wrap}>
@@ -52,13 +53,27 @@ export function MessagesScreen({ booked = true }: Props) {
               onPress={() => {
                 const t = draft.trim();
                 if (!t) return;
+                if (t.toLowerCase().includes('fail')) {
+                  setSendFailed(true);
+                  return;
+                }
                 setMessages((p) => [...p, t]);
                 setDraft('');
+                setSendFailed(false);
               }}
             >
               <Text style={styles.sendText}>Send</Text>
             </TouchableOpacity>
           </View>
+
+          {sendFailed && (
+            <View style={styles.failBar}>
+              <Text style={styles.failText}>Message failed to send.</Text>
+              <TouchableOpacity onPress={() => setSendFailed(false)}>
+                <Text style={styles.failRetry}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </>
       )}
     </View>
@@ -81,4 +96,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, backgroundColor: light.bg, borderRadius: radii.md, paddingHorizontal: spacing.md, minHeight: 42, color: light.text },
   send: { backgroundColor: light.primary, borderRadius: radii.md, justifyContent: 'center', paddingHorizontal: spacing.md, minHeight: 42 },
   sendText: { color: '#fff', fontWeight: '700' },
+  failBar: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: 116, backgroundColor: '#FEE2E2', borderRadius: radii.md, padding: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  failText: { color: '#991B1B', fontWeight: '600' },
+  failRetry: { color: light.navy, fontWeight: '700' },
 });

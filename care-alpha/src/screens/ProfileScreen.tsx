@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { light, radii, spacing } from '../theme/tokens';
 
-export function ProfileScreen() {
+export function ProfileScreen({ onSessionTimeout }: { onSessionTimeout?: () => void }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.avatar} />
@@ -11,6 +11,9 @@ export function ProfileScreen() {
       <Group title="Settings" items={['Account info', 'Notifications', 'Payment methods', 'Insurance']} />
       <Group title="Privacy & Security" items={['Privacy settings', 'Security']} />
       <Group title="Support & Legal" items={['Help', 'Terms', 'Privacy Policy']} />
+      <TouchableOpacity style={styles.sessionBtn} onPress={onSessionTimeout}>
+        <Text style={styles.sessionBtnText}>Simulate session timeout</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -37,4 +40,6 @@ const styles = StyleSheet.create({
   groupTitle: { color: light.text, fontWeight: '700', marginBottom: spacing.sm },
   item: { paddingVertical: spacing.sm },
   itemText: { color: light.subtext },
+  sessionBtn: { marginTop: spacing.md, alignSelf: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: '#EEF2FF' },
+  sessionBtnText: { color: light.navy, fontWeight: '700' },
 });

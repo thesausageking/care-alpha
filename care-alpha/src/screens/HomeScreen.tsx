@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AccessibilityInfo } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Doctor, AvailabilityMode } from '../types';
@@ -19,6 +20,11 @@ export function HomeScreen({ onBooked }: Props) {
   const [locationDenied, setLocationDenied] = useState(false);
   const [offline, setOffline] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
+  }, []);
 
   const doctors = useMemo(() => {
     if (mode === 'Now') return mockDoctors.filter((d) => d.availableNow);
@@ -78,7 +84,10 @@ export function HomeScreen({ onBooked }: Props) {
             <Marker
               key={d.id}
               coordinate={{ latitude: d.lat, longitude: d.lng }}
-              onPress={() => setSelected(d)}
+              onPress={() => {
+                if (!reduceMotion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelected(d);
+              }}
               accessibilityLabel={`${d.name}, ${d.specialty}, price ${d.price} pounds`}
             >
               <View style={styles.marker}>
@@ -134,6 +143,7 @@ export function HomeScreen({ onBooked }: Props) {
                     setPaymentFailed(true);
                     return;
                   }
+                  if (!reduceMotion) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   onBooked(selected);
                 }}
                 accessibilityRole="button"
