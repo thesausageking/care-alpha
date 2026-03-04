@@ -162,6 +162,9 @@ export default function App() {
     homeStage === 'booking2' ? 0.67 :
     homeStage === 'booking4' ? 1 : 0;
 
+  const bookingSteps = ['confirmed', 'starting_soon', 'completed'] as const;
+  const bookingStepIndex = bookingSteps.indexOf(bookingStatus);
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -395,10 +398,31 @@ export default function App() {
           <View style={styles.card}>
             <Text style={styles.placeholderTitle}>Booking status</Text>
             <Text style={styles.meta}>{selectedDoctor?.name ?? 'Dr Khan'} • Today 12:40</Text>
-            <Text style={styles.meta}>Status: {bookingStatus === 'confirmed' ? 'Confirmed' : bookingStatus === 'starting_soon' ? 'Starting soon' : 'Completed'}</Text>
+            <Text style={styles.meta}>Current: {bookingStatus === 'confirmed' ? 'Confirmed' : bookingStatus === 'starting_soon' ? 'Starting soon' : 'Completed'}</Text>
+
+            <View style={styles.timelineWrap}>
+              {bookingSteps.map((step, i) => (
+                <View key={step} style={styles.timelineRow}>
+                  <Ionicons
+                    name={i <= bookingStepIndex ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={16}
+                    color={i <= bookingStepIndex ? '#10B981' : '#94A3B8'}
+                  />
+                  <Text style={styles.meta}>
+                    {step === 'confirmed' ? 'Booking confirmed' : step === 'starting_soon' ? 'Starting soon' : 'Completed'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
             <Text style={styles.meta}>Deposit paid: £{selectedDoctor ? Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100) : 0}</Text>
             <Text style={styles.meta}>Remainder after appointment</Text>
-            <Text style={styles.meta}>Receipt: Download PDF (placeholder)</Text>
+          </View>
+
+          <View style={[styles.card, { marginTop: 10 }]}>
+            <Text style={styles.placeholderTitle}>Receipts</Text>
+            <Text style={styles.meta}>Deposit receipt • £{selectedDoctor ? Math.round((selectedDoctor.priceFrom * selectedDoctor.deposit) / 100) : 0}</Text>
+            <Text style={styles.meta}>Remainder receipt • Pending</Text>
           </View>
 
           {bookingStatus === 'completed' && (
@@ -592,6 +616,8 @@ const styles = StyleSheet.create({
   price: { fontSize: 16, fontWeight: '700', color: '#1D4ED8' },
   badge: { color: '#0F172A', fontWeight: '600', marginTop: 4 },
   meta: { color: '#475569', marginTop: 2 },
+  timelineWrap: { marginTop: 6, marginBottom: 6, gap: 4 },
+  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   alert: { color: '#B45309', marginTop: 6, fontWeight: '600' },
   reasonInput: {
     marginTop: 8,
